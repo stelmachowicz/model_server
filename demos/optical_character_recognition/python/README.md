@@ -1,18 +1,19 @@
 #  Optical Character Recognition with Directed Acyclic Graph {#ovms_demo_optical_character_recognition}
 
-This document demonstrate how to create and use an Optical Character Recognition (OCR) pipeline based on [east-resnet50](https://github.com/argman/EAST) text detection model,
+This document demonstrates how to create and use an Optical Character Recognition (OCR) pipeline based on [east-resnet50](https://github.com/argman/EAST) text detection model,
 [text-recognition](https://github.com/openvinotoolkit/open_model_zoo/tree/master/models/intel/text-recognition-0014) combined with a custom node implementation.
 
-Using such pipeline, a single request to OVMS can perform a complex set of operations with a response containing
+Using such a pipeline, a single request to OVMS can perform a complex set of operations with a response containing
 recognized characters for all detected text boxes. 
 
 ## OCR Graph
 
-Below is depicted the graph implementing a complete OCR pipelines. 
+Below is depicted the graph implementing complete OCR pipelines. 
 
 ![OCR graph](east_ocr.png)
 
 It includes the following nodes:
+
 - Model east-resnet50 - inference execution which takes the user image as input. It returns two outputs including information about all detected boxes, their location and scores.
 - Custom node east_ocr - it includes C++ implementation of east-resnet50 model results processing. It analyses the detected boxes coordinates, filters the results
 based on the configurable score level threshold and and applies non-max suppression algorithm to remove overlaping boxes. Finally the custom node east-ocr crops all detected boxes
@@ -30,12 +31,12 @@ The metadata are the `text_coordinates` and the `confidence_level` outputs.
 
 The original pretrained model for east-resnet50 topology is stored on https://github.com/argman/EAST in TensorFlow checkpoint format.
 
-Clone github repository:
+Clone GitHub repository:
 ```bash
 git clone https://github.com/argman/EAST 
 cd EAST 
 ```
-Download and unzip the file east_icdar2015_resnet_v1_50_rbox.zip as instructed in readme.md file to EAST folder with the github repository.
+Download and unzip the file east_icdar2015_resnet_v1_50_rbox.zip as instructed in the Readme.md file to EAST folder with the GitHub repository.
 ```bash
 unzip ./east_icdar2015_resnet_v1_50_rbox.zip
 ```
@@ -104,7 +105,7 @@ Custom nodes are loaded into OVMS as dynamic library implementing OVMS API from 
 It can use OpenCV libraries included in OVMS or it could use other thirdparty components.
 
 The custom node east_ocr can be built inside a docker container via the following procedure:
-- go to the custom node source code folder [src/custom_nodes/east_ocr](../src/custom_nodes/east_ocr)
+- go to the custom node source code folder [src/custom_nodes/east_ocr](https://github.com/openvinotoolkit/model_server/blob/v2021.4.2/src/custom_nodes/east_ocr)
 - run `make` command
 
 This command will export the compiled library in `./lib` folder.
@@ -144,7 +145,7 @@ Install python dependencies:
 pip3 install -r requirements.txt
 ``` 
 
-Now you can create directory for text images and run the client:
+Now you can create a directory for text images and run the client:
 ```bash
 mkdir results
 ```

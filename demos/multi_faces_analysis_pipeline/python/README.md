@@ -5,7 +5,7 @@ This document demonstrates how to create complex pipelines using object detectio
 
 ![Multi Faces Analysis Graph](multi_faces_analysis.png)
 
-Using such pipeline, a single request to OVMS can perform a complex set of operations to determine all faces and its properties.
+Using such a pipeline, a single request to OVMS can perform a complex set of operations to determine all faces and their properties.
 
 ### See also
 
@@ -80,7 +80,7 @@ Exemplary client [multi_faces_analysis_pipeline.py](multi_faces_analysis_pipelin
 pip3 install -r requirements.txt
 ``` 
 
-Now you can create directory for text images and run the client:
+Now you can create a directory for text images and run the client:
 ```bash
 mkdir results
 ```
