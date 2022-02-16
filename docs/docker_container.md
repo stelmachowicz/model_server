@@ -105,7 +105,7 @@ For more detailed information read [OpenVino's Multi-Device plugin documentation
 
 In order to use this feature in OpenVino™ Model Server, following steps are required:
 
-Set target_device for the model in configuration json file to MULTI:<DEVICE_1>,<DEVICE_2> (e.g. MULTI:MYRIAD,CPU, order of the devices defines their priority, so MYRIAD devices will be used first in this example)
+Set target_device for the model in configuration json file to MULTI:DEVICE_1,DEVICE_2 (e.g. MULTI:MYRIAD,CPU, order of the devices defines their priority, so MYRIAD devices will be used first in this example)
 
 Below is exemplary config.json setting up Multi-Device Plugin for resnet model, using Intel® Movidius™ Neural Compute Stick and CPU devices:
 ```

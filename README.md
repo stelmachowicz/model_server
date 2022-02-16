@@ -14,6 +14,7 @@
    ovms_docs_clients
    ovms_docs_dag
    ovms_docs_binary_input
+   ovms_docs_model_cache
    ovms_docs_dynamic_input
    ovms_docs_stateful_models
    ovms_docs_custom_loader
@@ -81,7 +82,7 @@ For more information on using Model Server in various scenarios you can check th
 
 * [Serving stateful models](docs/stateful_models.md)
 
-* [Deploy using a Kubernetes Helm Chart](deploy/README.md)
+* [Deploy using a Kubernetes Helm Chart](../deploy/README.md)
 
 * [Deployment using Kubernetes Operator](https://operatorhub.io/operator/ovms-operator)
 
@@ -114,5 +115,3 @@ If you have a question, a feature request, or a bug report, feel free to submit 
 
 ---
 \* Other names and brands may be claimed as the property of others.
-
-
