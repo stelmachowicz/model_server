@@ -1,4 +1,34 @@
-# OpenVINO™ Model Server Demos
+# OpenVINO™ Model Server Demos {#ovms_docs_demos}
+
+@sphinxdirective
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   ovms_docs_demo_age_gender_guide
+   ovms_demo_horizontal_text_detection
+   ovms_demo_optical_character_recognition
+   ovms_demo_face_detection
+   ovms_demo_single_face_analysis_pipeline
+   ovms_demo_multi_faces_analysis_pipeline
+   ovms_demo_image_classification
+   ovms_demo_image_classification_cpp
+   ovms_demo_image_classification_go
+   ovms_demo_using_onnx_model
+   ovms_demo_person_vehicle_bike_detection
+   ovms_demo_vehicle_analysis_pipeline
+   ovms_demo_bert
+   ovms_demo_speech_recognition
+   ovms_demo_benchmark_app
+   ovms_demo_benchmark_app_cpp
+   ovms_docs_dynamic_bs_demultiplexer
+   ovms_docs_dynamic_bs_auto_reload
+   ovms_docs_dynamic_shape_auto_reload
+   ovms_docs_dynamic_shape_custom_node
+   ovms_docs_dynamic_shape_binary_inputs
+
+@endsphinxdirective
 
 OpenVINO Model Server demos have been created to showcase the usage of the model server as well as demonstrate it’s capabilities. Check out the list below to see complete step-by-step examples of using OpenVINO Model Server with real world use cases:
 
@@ -12,7 +42,7 @@ OpenVINO Model Server demos have been created to showcase the usage of the model
 |[Multi Faces Analysis Pipeline](multi_faces_analysis_pipeline/python)|Run prediction on a JPEG image using a pipeline of age-gender recognition and emotion recogition models via gRPC API to extract multiple faces from the image and analyze all of them.<br />_This demo uses [pipeline](../docs/dag_scheduler.md) with [model_zoo_intel_object_detection custom node](../src/custom_nodes/model_zoo_intel_object_detection) and [demultiplexer](../docs/demultiplexing.md)_|
 |[Image Classification](image_classification/python)|Run prediction on a JPEG image using image classification model via gRPC API.|
 |[Using ONNX Model](using_onnx_model/python)|Run prediction on a JPEG image using image classification ONNX model via gRPC API in two preprocessing variants.<br />_This demo uses [pipeline](../docs/dag_scheduler.md) with [image_transformation custom node](../src/custom_nodes/image_transformation)_|
-|[Person, Vehicle, Bike Detection](person_bike_vehicle_detection/python)|Run prediction on a video file or camera stream using person, vehicle, bike detection model via gRPC API.|
+|[Person, Vehicle, Bike Detection](person_vehicle_bike_detection/python)|Run prediction on a video file or camera stream using person, vehicle, bike detection model via gRPC API.|
 |[Vehicle Analysis Pipeline](vehicle_analysis_pipeline/python)|Detect vehicles and recognize their attributes using a pipeline of vehicle detection and vehicle attributes recognition models with a custom node for intermediate results processing via gRPC API.<br />_This demo uses [pipeline](../docs/dag_scheduler.md) with [model_zoo_intel_object_detection custom node](../src/custom_nodes/model_zoo_intel_object_detection)_|
 |[Natural Language Processing with BERT](bert_question_answering/python)|Provide a knowledge source and a query and use BERT model for question answering use case via gRPC API.<br />_This demo uses dynamic shape feature_|
 |[Speech Recognition on Kaldi Model](speech_recognition_with_kaldi_model/python)|Run inference on a speech sample and use Kaldi model to perform speech recognition via gRPC API.<br />_This demo uses [stateful model](../docs/stateful_models)_|
@@ -28,3 +58,15 @@ OpenVINO Model Server demos have been created to showcase the usage of the model
 | Demo | Description |
 |---|---|
 |[Image Classification](image_classification/go)|Run prediction on a JPEG image using image classification model via gRPC API.|
+
+## Additional demos
+
+- [dynamic batch size with a demuliplexer](../docs/dynamic_bs_demultiplexer.md) - create a simple pipeline that splits data of any batch size and performs inference on each element in the batch separately.
+
+- [dynamic batch size with automatic model reloading](../docs/dynamic_bs_auto_reload.md) - configure the model server to reload the model every time it receives a request with batch size other than what is currently set.
+
+- [dynamic shape with automatic model reloading](../docs/dynamic_shape_auto_reload.md) - configure the model server to reload a model every time the model receives a request with data in a shape other than what is currently set.
+
+- [dynamic input shape with a custom node](../docs/dynamic_shape_custom_node.md) - create a simple pipeline by pairing a model with a custom node that performs data preprocessing and provides the model with data in an acceptable shape.
+
+- [dynamic input shape with binary input format](../docs/dynamic_shape_binary_inputs.md) - send data in binary format (i.e. JPEG or PNG encoded), so the model server adjusts the input on data decoding. 
