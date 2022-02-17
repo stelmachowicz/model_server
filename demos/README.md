@@ -22,11 +22,6 @@
    ovms_demo_speech_recognition
    ovms_demo_benchmark_app
    ovms_demo_benchmark_app_cpp
-   ovms_docs_dynamic_bs_demultiplexer
-   ovms_docs_dynamic_bs_auto_reload
-   ovms_docs_dynamic_shape_auto_reload
-   ovms_docs_dynamic_shape_custom_node
-   ovms_docs_dynamic_shape_binary_inputs
 
 @endsphinxdirective
 
@@ -58,15 +53,3 @@ OpenVINO Model Server demos have been created to showcase the usage of the model
 | Demo | Description |
 |---|---|
 |[Image Classification](image_classification/go)|Run prediction on a JPEG image using image classification model via gRPC API.|
-
-## Additional demos
-
-- [dynamic batch size with a demuliplexer](../docs/dynamic_bs_demultiplexer.md) - create a simple pipeline that splits data of any batch size and performs inference on each element in the batch separately.
-
-- [dynamic batch size with automatic model reloading](../docs/dynamic_bs_auto_reload.md) - configure the model server to reload the model every time it receives a request with batch size other than what is currently set.
-
-- [dynamic shape with automatic model reloading](../docs/dynamic_shape_auto_reload.md) - configure the model server to reload a model every time the model receives a request with data in a shape other than what is currently set.
-
-- [dynamic input shape with a custom node](../docs/dynamic_shape_custom_node.md) - create a simple pipeline by pairing a model with a custom node that performs data preprocessing and provides the model with data in an acceptable shape.
-
-- [dynamic input shape with binary input format](../docs/dynamic_shape_binary_inputs.md) - send data in binary format (i.e. JPEG or PNG encoded), so the model server adjusts the input on data decoding. 

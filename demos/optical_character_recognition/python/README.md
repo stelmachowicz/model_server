@@ -105,7 +105,7 @@ Custom nodes are loaded into OVMS as dynamic library implementing OVMS API from 
 It can use OpenCV libraries included in OVMS or it could use other thirdparty components.
 
 The custom node east_ocr can be built inside a docker container via the following procedure:
-- go to the custom node source code folder [src/custom_nodes/east_ocr](https://github.com/openvinotoolkit/model_server/blob/v2021.4.2/src/custom_nodes/east_ocr)
+- go to the custom node source code folder [src/custom_nodes/east_ocr](https://github.com/openvinotoolkit/model_server/blob/develop/src/custom_nodes/east_ocr)
 - run `make` command
 
 This command will export the compiled library in `./lib` folder.
