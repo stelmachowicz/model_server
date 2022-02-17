@@ -14,7 +14,10 @@
    ovms_docs_clients
    ovms_docs_dag
    ovms_docs_binary_input
+<<<<<<< HEAD
    ovms_docs_model_cache
+=======
+>>>>>>> origin/main
    ovms_docs_dynamic_input
    ovms_docs_stateful_models
    ovms_docs_custom_loader
@@ -32,10 +35,17 @@ OpenVINO&trade; Model Server (OVMS) is a high-performance system for serving mac
 and optimized for Intel solutions, so that you can take advantage of all the power of the Intel® Xeon® processor or Intel’s AI accelerators 
 and expose it over a network interface. OVMS uses the same architecture and API as [TensorFlow Serving](https://github.com/tensorflow/serving), 
 while applying OpenVINO for inference execution. Inference service is provided via gRPC or REST API, making it easy to deploy new algorithms and AI experiments.
+<<<<<<< HEAD
 
 Model repositories may reside on a locally accessible file system (e.g. NFS), as well as online storage compatible with 
 Google Cloud Storage (GCS), Amazon S3, or Azure Blob Storage. 
 
+=======
+
+Model repositories may reside on a locally accessible file system (e.g. NFS), as well as online storage compatible with 
+Google Cloud Storage (GCS), Amazon S3, or Azure Blob Storage. 
+
+>>>>>>> origin/main
 Read [release notes](https://github.com/openvinotoolkit/model_server/releases) to find out what’s new.
 
 Review the [Architecture concept](docs/architecture.md) document for more details.
@@ -54,7 +64,10 @@ Key features:
 - [custom nodes in DAG pipelines](docs/custom_node_development.md) - allowing model inference and data transformations to be implemented with a custom node C/C++ dynamic library
 - [serving stateful models](docs/stateful_models.md) - models that operate on sequences of data and maintain their state between inference requests
 - [binary format of the input data](docs/binary_input.md) - data can be sent in JPEG or PNG formats to reduce traffic and offload the client applications
+<<<<<<< HEAD
 - [model caching](docs/model_cache.md). cache the models on first load and re-use models from cache on subsequent loads
+=======
+>>>>>>> origin/main
 
 
 **Note:** OVMS has been tested on RedHat, CentOS, and Ubuntu. The latest publicly released docker images are based on Ubuntu and UBI.
@@ -82,7 +95,11 @@ For more information on using Model Server in various scenarios you can check th
 
 * [Serving stateful models](docs/stateful_models.md)
 
+<<<<<<< HEAD
 * [Deploy using a Kubernetes Helm Chart](../deploy/README.md)
+=======
+* [Deploy using a Kubernetes Helm Chart](deploy/README.md)
+>>>>>>> origin/main
 
 * [Deployment using Kubernetes Operator](https://operatorhub.io/operator/ovms-operator)
 
