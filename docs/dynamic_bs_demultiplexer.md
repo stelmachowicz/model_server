@@ -9,11 +9,11 @@ More information about this feature can be found in [dynamic batch size in demul
 
 > **NOTE**: When using `demultiply_count` parameters, only one demultiplexer can exist in the pipeline.
 
-- Example client in python [grpc_predict_resnet.py](https://github.com/openvinotoolkit/model_server/blob/develop/client/python/tensorflow-serving-api/samples/grpc_predict_resnet.py) can be used to request the pipeline. Use `--dag-batch-size-auto` flag to add an additional dimension to the input shape which is required for demultiplexing feature.
+- Example client in python [grpc_serving_client.py](https://github.com/openvinotoolkit/model_server/blob/v2021.4.2/example_client/grpc_serving_client.py) can be used to request the pipeline. Use `--dag-batch-size-auto` flag to add an additional dimension to the input shape which is required for demultiplexing feature.
 
 - The example uses model [resnet](https://github.com/openvinotoolkit/open_model_zoo/blob/master/models/intel/resnet50-binary-0001/README.md).
 
-- While using resnet model with grpc_predict_resnet.py the script processes the output from the server and displays the inference results using the previously prepared file with labels. Inside this file, each image has an assigned number, which indicates the correct recognition answer.  
+- While using resnet model with grpc_serving_client.py the script processes the output from the server and displays the inference results using the previously prepared file with labels. Inside this file, each image has an assigned number, which indicates the correct recognition answer.  
 
 ## Steps
 Clone OpenVINO&trade; Model Server GitHub repository and enter `model_server` directory.
@@ -100,12 +100,12 @@ docker run --rm -d -v $(pwd)/models:/models -p 9000:9000 openvino/model_server:l
 
 #### Checking metadata
 ```Bash
-cd ../client/python/tensorflow-serving-api/samples
+cd ../example_client
 virtualenv .venv
 . .venv/bin/activate
-pip install -r requirements.txt
+pip install -r client_requirements.txt
 
-python grpc_get_model_metadata.py --grpc_port 9000 --model_name resnet50DAG
+python get_serving_meta.py --grpc_port 9000 --model_name resnet50DAG
 ```
 
 ```Bash
@@ -121,7 +121,7 @@ Outputs metadata:
 
 #### Run the client
 ```Bash
-python grpc_predict_resnet.py --grpc_port 9000 --images_numpy_path ../../imgs.npy --labels_numpy_path ../../lbs.npy --input_name 0 --output_name 1463 --model_name resnet50DAG --dag-batch-size-auto --transpose_input False --batchsize 1 > b1.txt && python grpc_predict_resnet.py --grpc_port 9000 --images_numpy_path ../../imgs.npy --labels_numpy_path ../../lbs.npy --input_name 0 --output_name 1463 --model_name resnet50DAG --dag-batch-size-auto --transpose_input False --batchsize 8 > b8.txt;
+python grpc_serving_client.py --grpc_port 9000 --images_numpy_path imgs.npy --labels_numpy_path lbs.npy --input_name 0 --output_name 1463 --model_name resnet50DAG --dag-batch-size-auto --transpose_input False --batchsize 1 > b1.txt && python grpc_serving_client.py --grpc_port 9000 --images_numpy_path imgs.npy --labels_numpy_path lbs.npy --input_name 0 --output_name 1463 --model_name resnet50DAG --dag-batch-size-auto --transpose_input False --batchsize 8 > b8.txt;
 ```
 *Note:* Results of running the client will be available in .txt files in the current directory.
 

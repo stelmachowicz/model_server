@@ -5,7 +5,7 @@ This guide explains how to configure a model to accept input data in different s
 
 Enable dynamic shape via model reloading by setting the `shape` parameter to `auto`. To configure and use the dynamic batch size, take advantage of:
 
-- Example client in Python [face_detection.py](https://github.com/openvinotoolkit/model_server/blob/develop/demos/face_detection/python/face_detection.py) that can be used to request inference with the desired input shape.
+- Example client in Python [face_detection.py](https://github.com/openvinotoolkit/model_server/blob/v2021.4.2/example_client/face_detection.py) that can be used to request inference with the desired input shape.
 
 - An example [face_detection_retail_0004](https://docs.openvinotoolkit.org/2021.4/omz_models_model_face_detection_retail_0004.html) model.
 
@@ -38,10 +38,10 @@ docker run --rm -d -v $(pwd)/models:/models -p 9000:9000 openvino/model_server:l
 
 #### Run the Client
 ```Bash
-cd demos/face_detection/python
+cd example_client
 virtualenv .venv
 . .venv/bin/activate
-pip install -r ../../common/python/requirements.txt
+pip install -r client_requirements.txt
 mkdir results_500x500 results_600x400
 
 python face_detection.py --width 500 --height 500 --input_images_dir images/people --output_dir results_500x500

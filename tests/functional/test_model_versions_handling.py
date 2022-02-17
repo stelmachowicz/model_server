@@ -17,10 +17,8 @@
 import pytest
 import numpy as np
 
-from config import  skip_nginx_test
-from constants import MODEL_SERVICE, TARGET_DEVICE_GPU, TARGET_DEVICE_HDDL, TARGET_DEVICE_MYRIAD, TARGET_DEVICE_CUDA, \
-    NOT_TO_BE_REPORTED_IF_SKIPPED
-from conftest import devices_not_supported_for_test
+from config import target_device, skip_nginx_test, skip_hddl_tests
+from constants import MODEL_SERVICE
 from model.models_information import PVBFaceDetectionV2, PVBFaceDetection
 from utils.grpc import create_channel, infer, get_model_metadata, model_metadata_response, \
     get_model_status
@@ -32,8 +30,11 @@ from utils.rest import get_predict_url, get_metadata_url, get_status_url, infer_
 
 logger = logging.getLogger(__name__)
 
-@pytest.mark.skipif(skip_nginx_test, reason=NOT_TO_BE_REPORTED_IF_SKIPPED)
-@devices_not_supported_for_test([TARGET_DEVICE_MYRIAD, TARGET_DEVICE_HDDL, TARGET_DEVICE_GPU, TARGET_DEVICE_CUDA])
+
+@pytest.mark.skipif(skip_hddl_tests, reason="Shapes are not supported by HDDL")
+@pytest.mark.skipif(skip_nginx_test, reason="not implemented yet")
+@pytest.mark.skipif(target_device == "GPU", reason="Unsupported property key by plugin: CPU_THROUGHPUT_STREAMS")
+@pytest.mark.skipif(target_device == "MYRIAD", reason="error: Cannot load network into target device")
 class TestModelVersionHandling:
     model_name = "pvb_face_multi_version"
 

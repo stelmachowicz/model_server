@@ -78,7 +78,7 @@ The default account in the docker image is preconfigured. If you change the secu
 
 ```bash
 
-docker run --rm -it  --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render* | head -n 1) -u $(id -u):$(id -g) \
+docker run --rm -it  --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/render*) -u $(id -u):$(id -g) \
 
 -v /opt/model:/opt/model -p 9001:9001 openvino/model_server:latest-gpu \
 
@@ -87,7 +87,7 @@ docker run --rm -it  --device=/dev/dri --group-add=$(stat -c "%g" /dev/dri/rende
 ```
 
 >Note:
-> The public docker image includes the OpenCL drivers for GPU in version 21.38.21026.
+> The docker image includes OpenCL drivers for GPU, version 20.35.17767. An older version can be also used, although, it will not work with the latest Intel platforms - TigerLake or newer.  
 To use an older version, build the image with the following parameter: 
 
 ```bash

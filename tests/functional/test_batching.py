@@ -17,9 +17,8 @@ import pytest
 import numpy as np
 import json
 import os
-from constants import ERROR_SHAPE, TARGET_DEVICE_MYRIAD, NOT_TO_BE_REPORTED_IF_SKIPPED, TARGET_DEVICE_HDDL
-from config import skip_nginx_test
-from conftest import devices_not_supported_for_test
+from constants import ERROR_SHAPE
+from config import target_device, skip_nginx_test, skip_hddl_tests
 from model.models_information import ResnetBS8, AgeGender
 from utils.grpc import create_channel, infer, get_model_metadata, model_metadata_response
 import logging
@@ -27,7 +26,8 @@ from utils.rest import get_predict_url, get_metadata_url, infer_rest, get_model_
 
 logger = logging.getLogger(__name__)
 
-@pytest.mark.skipif(skip_nginx_test, reason=NOT_TO_BE_REPORTED_IF_SKIPPED)
+
+@pytest.mark.skipif(skip_nginx_test, reason="not implemented yet")
 class TestBatchModelInference:
 
     @pytest.fixture()
@@ -46,7 +46,7 @@ class TestBatchModelInference:
         out_names = list(json_dict["outputs"].keys())
         return in_name, out_names, json_dict["outputs"]
 
-    @devices_not_supported_for_test([TARGET_DEVICE_HDDL])
+    @pytest.mark.skipif(skip_hddl_tests, reason="Shape is not supported by HDDL")
     def test_run_inference(self, start_server_batch_model):
         """
         <b>Description</b>
@@ -78,8 +78,8 @@ class TestBatchModelInference:
         logger.info("Output shape: {}".format(output[ResnetBS8.output_name].shape))
         assert output[ResnetBS8.output_name].shape == ResnetBS8.output_shape, ERROR_SHAPE
 
-    @devices_not_supported_for_test([TARGET_DEVICE_MYRIAD])
-    @pytest.mark.skipif(True, reason="CVS-73762 Setting batchsize is not supported")
+    @pytest.mark.skipif(target_device == "MYRIAD",
+                        reason="error: Cannot load network into target device")
     def test_run_inference_bs4(self, start_server_batch_model_bs4):
 
         _, ports = start_server_batch_model_bs4
@@ -95,8 +95,9 @@ class TestBatchModelInference:
         logger.info("Output shape: {}".format(output[ResnetBS8.output_name].shape))
         assert output[ResnetBS8.output_name].shape == (4,) + ResnetBS8.output_shape[1:], ERROR_SHAPE
 
-    @devices_not_supported_for_test([TARGET_DEVICE_HDDL, TARGET_DEVICE_MYRIAD])
-    @pytest.mark.skipif(True, reason="CVS-73762 Setting batchsize is not supported")
+    @pytest.mark.skipif(skip_hddl_tests, reason="Shape is not supported by HDDL")
+    @pytest.mark.skipif(target_device == "MYRIAD",
+                        reason="Can not init Myriad device: NC_ERROR;")
     def test_run_inference_auto(self, start_server_batch_model_auto):
 
         _, ports = start_server_batch_model_auto
@@ -132,7 +133,8 @@ class TestBatchModelInference:
         assert expected_input_metadata == input_metadata
         assert expected_output_metadata == output_metadata
 
-    @devices_not_supported_for_test([TARGET_DEVICE_MYRIAD])
+    @pytest.mark.skipif(target_device == "MYRIAD",
+                        reason="error: Cannot load network into target device")
     @pytest.mark.parametrize("request_format",
                              ['row_name', 'row_noname',
                               'column_name', 'column_noname'])
@@ -172,7 +174,6 @@ class TestBatchModelInference:
     @pytest.mark.parametrize("request_format",
                              ['row_name', 'row_noname',
                               'column_name', 'column_noname'])
-    @pytest.mark.skipif(True, reason="CVS-73762 Setting batchsize is not supported")
     def test_run_inference_bs4_rest(self, start_server_batch_model_auto_bs4_2out,
                                     mapping_names,
                                     request_format):
@@ -210,11 +211,11 @@ class TestBatchModelInference:
             expected_shape = (batch_size,) + AgeGender.output_shape[out_mapping[output_names]][1:]
             assert output[output_names].shape == expected_shape, ERROR_SHAPE
 
-    @devices_not_supported_for_test([TARGET_DEVICE_MYRIAD])
+    @pytest.mark.skipif(target_device == "MYRIAD",
+                        reason="error: Cannot load network into target device")
     @pytest.mark.parametrize("request_format",
                              ['row_name', 'row_noname',
                               'column_name', 'column_noname'])
-    @pytest.mark.skipif(True, reason="CVS-73762 Setting batchsize is not supported")
     def test_run_inference_rest_auto(self, start_server_batch_model_auto_2out,
                                      mapping_names,
                                      request_format):
