@@ -238,6 +238,16 @@ cc_binary(
 )
 
 cc_binary(
+    name = "my_app",
+    srcs = [
+	    "my_app.cpp"
+    ],
+    deps = [
+        "@openvino//:openvino",
+    ],
+)
+
+cc_binary(
     name = "lib_node_mock.so",
     srcs = [
 	    "test/custom_nodes/node_mock.c",
