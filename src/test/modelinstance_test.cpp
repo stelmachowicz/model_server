@@ -779,7 +779,7 @@ TEST_F(TestReloadModelWithMapping, ReloadMultipleTimes) {
     EXPECT_EQ(ovms::ModelVersionState::AVAILABLE, modelInstance.getStatus().getState());
 }
 
-TEST(CpuThroughputStreamsNotSpecified, DefaultIsSetForCPU) {
+TEST(CpuThroughputStreamsNotSpecified, DISABLED_DefaultIsSetForCPU) {
     ovms::ModelConfig config;
     config.setTargetDevice("CPU");
     config.setPluginConfig({});
@@ -787,7 +787,7 @@ TEST(CpuThroughputStreamsNotSpecified, DefaultIsSetForCPU) {
     EXPECT_EQ(pluginConfig.count("CPU_THROUGHPUT_STREAMS"), 1);
 }
 
-TEST(CpuThroughputStreamsNotSpecified, DefaultIsSetForHeteroCPU) {
+TEST(CpuThroughputStreamsNotSpecified, DISABLED_DefaultIsSetForHeteroCPU) {
     ovms::ModelConfig config;
     config.setTargetDevice("HETERO:MYRIAD,CPU");
     config.setPluginConfig({});
