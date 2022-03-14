@@ -31,6 +31,7 @@ namespace ovms {
 class NodeInputHandler {
 protected:
     TensorMap inputTensors;
+    std::vector<ov::Tensor> tensorsSaved;
     uint32_t remainingDependencies;
     bool isUsed = false;
 
@@ -40,6 +41,9 @@ public:
     const TensorMap& getInputs() {
         isUsed = true;
         return inputTensors;
+    }
+    std::vector<ov::Tensor>& getTensorsSaved() {
+        return tensorsSaved;
     }
     void clearInputs();
     bool isReady();

@@ -257,6 +257,8 @@ Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest) {
             }
             ov::Tensor tensorCopy;
             ovms::tensorClone(tensorCopy, tensor);
+            this->inputHandler->getTensorsSaved().push_back(tensorCopy);
+
             inferRequest.set_tensor(realModelInputName, tensorCopy);
         }
         // OV implementation the ov::Exception is not
