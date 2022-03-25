@@ -101,6 +101,8 @@ cc_library(
         "gathernodeinputhandler.hpp",
         "gcsfilesystem.cpp",
         "gcsfilesystem.hpp",
+        "minitrace.h",
+        "minitrace.c",
         "model.cpp",
         "model.hpp",
         "model_version_policy.cpp",
@@ -157,6 +159,7 @@ cc_library(
         "prediction_service_utils.cpp",
         "predict_request_validation_utils.hpp",
         "predict_request_validation_utils.cpp",
+        "profiler.hpp",
         "rest_parser.cpp",
         "rest_parser.hpp",
         "rest_utils.cpp",
@@ -216,7 +219,8 @@ cc_library(
         "@opencv//:opencv",
     ],
     local_defines = [
-        "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG"
+        "SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_DEBUG",
+        "MTR_ENABLED"
     ],
     copts = [
         "-Wall",

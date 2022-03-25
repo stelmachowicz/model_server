@@ -31,6 +31,8 @@
 #include "tensorinfo.hpp"
 #include "timer.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 DLNodeSession::DLNodeSession(const NodeSessionMetadata& metadata, const std::string& nodeName, uint32_t inputsCount, const CollapseDetails& collapsingDetails, ModelManager& manager, const std::string& modelName, model_version_t modelVersion) :
     NodeSession(metadata, nodeName, inputsCount, collapsingDetails),
@@ -65,6 +67,7 @@ ov::InferRequest& DLNodeSession::getInferRequest(const uint microseconds) {
 }
 
 Status DLNodeSession::requestExecuteRequiredResources() {
+    OVMS_PROFILE_FUNCTION();
     Status status = modelManager.getModelInstance(
         modelName,
         modelVersion,
@@ -85,6 +88,7 @@ Status DLNodeSession::requestExecuteRequiredResources() {
 }
 
 Status DLNodeSession::prepareInputsAndModelForInference() {
+    OVMS_PROFILE_FUNCTION();
     std::optional<Dimension> requestedBatchSize = std::nullopt;
     std::map<std::string, shape_t> requestedReshapes;
 
@@ -147,6 +151,7 @@ Status DLNodeSession::prepareInputsAndModelForInference() {
 }
 
 Status DLNodeSession::validate(const ov::Tensor& tensor, const TensorInfo& tensorInfo) {
+    OVMS_PROFILE_FUNCTION();
     if (ovmsPrecisionToIE2Precision(tensorInfo.getPrecision()) != tensor.get_element_type()) {
         std::stringstream ss;
         ss << "Node: " << getName() << " input: " << tensorInfo.getName()
@@ -207,6 +212,7 @@ Status DLNodeSession::validate(const ov::Tensor& tensor, const TensorInfo& tenso
 }
 
 Status DLNodeSession::execute(PipelineEventQueue& notifyEndQueue, uint waitForStreamIdTimeoutMicroseconds, Node& node) {
+    OVMS_PROFILE_FUNCTION();
     Status status;
     if (this->nodeStreamIdGuard == nullptr) {
         status = requestExecuteRequiredResources();
@@ -245,6 +251,7 @@ Status DLNodeSession::getRealInputName(const std::string& alias, std::string* re
 }
 
 Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest) {
+    OVMS_PROFILE_FUNCTION();
     Status status = StatusCode::OK;
     try {
         // Prepare inference request, fill with input tensors
@@ -266,6 +273,7 @@ Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest) {
                 inferRequest.set_tensor(realModelInputName, clonedTensor);
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "[Node: {}] tensor name: {} cloned before GPU inference", getName(), name);
             } else {
+                OVMS_PROFILE_SCOPE("ov::InferRequest::set_tensor");
                 inferRequest.set_tensor(realModelInputName, tensor);
             }
         }
@@ -286,9 +294,12 @@ Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest) {
 }
 
 Status DLNodeSession::executeInference(PipelineEventQueue& notifyEndQueue, ov::InferRequest& inferRequest, Node& node) {
+    OVMS_PROFILE_FUNCTION();
     try {
         SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Setting completion callback for node name: {}", this->getName());
+        OVMS_PROFILE_SYNC_BEGIN("ov::InferRequest::set_callback");
         inferRequest.set_callback([this, &notifyEndQueue, &inferRequest, &node](std::exception_ptr exception_ptr) {
+            OVMS_PROFILE_ASYNC_END("ov::InferRequest::inference", this);
             this->timer->stop("inference");
             SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Completion callback received for node name: {}", this->getName());
             // After inference is completed, input tensors are not needed anymore
@@ -296,9 +307,13 @@ Status DLNodeSession::executeInference(PipelineEventQueue& notifyEndQueue, ov::I
             notifyEndQueue.push({node, getSessionKey()});
             inferRequest.set_callback([](std::exception_ptr exception_ptr) {});  // reset callback on infer request
         });
+        OVMS_PROFILE_SYNC_END("ov::InferRequest::set_callback");
         SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Starting infer async for node name: {}", getName());
         this->timer->start("inference");
+        OVMS_PROFILE_SYNC_BEGIN("ov::InferRequest::start_async");
         inferRequest.start_async();
+        OVMS_PROFILE_SYNC_END("ov::InferRequest::start_async");
+        OVMS_PROFILE_ASYNC_BEGIN("ov::InferRequest::inference", this);
     } catch (const ov::Exception& e) {
         SPDLOG_LOGGER_DEBUG(dag_executor_logger, "[Node: {}] Exception occured when starting async inference or setting completion callback on model: {}, error: {}",
             getName(), getModelName(), e.what());
@@ -316,12 +331,14 @@ Status DLNodeSession::executeInference(PipelineEventQueue& notifyEndQueue, ov::I
 }
 
 void DLNodeSession::release() {
+    OVMS_PROFILE_FUNCTION();
     this->nodeStreamIdGuard.reset();
     this->model.reset();
     this->modelUnloadGuard.reset();
 }
 
 bool DLNodeSession::tryDisarm(uint microseconds) {
+    OVMS_PROFILE_FUNCTION();
     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Trying to disarm stream id guard of node: {}", getName());
     if (this->nodeStreamIdGuard == nullptr) {
         return true;

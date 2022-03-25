@@ -38,6 +38,8 @@
 #include "stringutils.hpp"
 #include "version.hpp"
 
+#include "minitrace.h"
+
 using grpc::Server;
 using grpc::ServerBuilder;
 
@@ -250,6 +252,10 @@ std::unique_ptr<ovms::http_server> startRESTServer() {
 }
 
 int server_main(int argc, char** argv) {
+    mtr_init("trace.json");
+    MTR_META_PROCESS_NAME("ovms");
+    MTR_META_THREAD_NAME("main thread");
+
     installSignalHandlers();
     try {
         auto& config = ovms::Config::instance().parse(argc, argv);
@@ -288,5 +294,7 @@ int server_main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
+    mtr_flush();
+    mtr_shutdown();
     return EXIT_SUCCESS;
 }

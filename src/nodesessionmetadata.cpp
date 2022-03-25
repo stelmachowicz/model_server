@@ -22,10 +22,12 @@
 #include <utility>
 
 #include "logging.hpp"
+#include "profiler.hpp"
 
 namespace ovms {
 
 std::vector<NodeSessionMetadata> NodeSessionMetadata::generateSubsessions(const std::string& nodeName, session_id_t subsessionSize) const {
+    OVMS_PROFILE_FUNCTION();
     if (nodeName.size() == 0) {
         SPDLOG_LOGGER_ERROR(dag_executor_logger, "Tried to generate subsession with empty node name");
         throw std::logic_error("Cannot generate subsession with empty parent name");
@@ -57,6 +59,7 @@ std::vector<NodeSessionMetadata> NodeSessionMetadata::generateSubsessions(const 
 }
 
 std::string NodeSessionMetadata::getSessionKey(const std::set<std::string>& ignoredNodeNames) const {
+    OVMS_PROFILE_FUNCTION();
     if (details.size() == 0) {
         return "";
     }
@@ -97,6 +100,7 @@ std::string NodeSessionMetadata::getSessionKey(const std::set<std::string>& igno
 }
 
 std::pair<NodeSessionMetadata, CollapseDetails> NodeSessionMetadata::getCollapsedSessionMetadata(const std::set<std::string>& ignoredNodeNames) const {
+    OVMS_PROFILE_FUNCTION();
     if (ignoredNodeNames.size() == 0) {
         SPDLOG_LOGGER_ERROR(dag_executor_logger, "Tried to collapse subsession with emtpy set");
         throw std::logic_error("Tried to collapse sessions with empty set");
@@ -150,6 +154,7 @@ session_id_t NodeSessionMetadata::getSubsessionSize(const std::string& subsessio
 }
 
 session_id_t NodeSessionMetadata::getShardId(const std::set<std::string>& collapsedNames) const {
+    OVMS_PROFILE_FUNCTION();
     if (collapsedNames.size() == 0) {
         return 0;
     }

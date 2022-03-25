@@ -30,6 +30,8 @@
 #include "status.hpp"
 #include "tensorinfo.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 template <typename T>
@@ -58,10 +60,11 @@ Status serializePredictResponse(
     OutputGetter<T>& outputGetter,
     const tensor_map_t& outputMap,
     tensorflow::serving::PredictResponse* response) {
+    OVMS_PROFILE_FUNCTION();
     Status status;
     for (const auto& [outputName, outputInfo] : outputMap) {
         ov::Tensor tensor;
-        status = outputGetter.get(outputName, tensor);
+        status = outputGetter.get(outputName, tensor);  // this clones.
         if (!status.ok()) {
             return status;
         }

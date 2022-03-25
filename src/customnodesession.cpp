@@ -29,6 +29,8 @@
 #include "pipelineeventqueue.hpp"
 #include "timer.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 CustomNodeSession::CustomNodeSession(const NodeSessionMetadata& metadata, const std::string& nodeName, uint32_t inputsCount, const CollapseDetails& collapsingDetails) :
@@ -49,6 +51,7 @@ std::unordered_map<std::string, shape_t> createOwnedShapesCopy(const TensorMap& 
 }
 
 Status CustomNodeSession::execute(PipelineEventQueue& notifyEndQueue, Node& node, const NodeLibrary& library, std::unique_ptr<struct CustomNodeParam[]>& parameters, int parametersCount, void* customNodeLibraryInternalManager) {
+    OVMS_PROFILE_FUNCTION();
     const auto& tensorMap = this->inputHandler->getInputs();
     auto inputTensorsCount = tensorMap.size();
     // this is a hack to overcome OV 1.0 -> 2.0 API change where we do not get reference to
@@ -58,6 +61,8 @@ Status CustomNodeSession::execute(PipelineEventQueue& notifyEndQueue, Node& node
     struct CustomNodeTensor* outputTensors = nullptr;
     int outputTensorsCount = 0;
     this->timer->start("execution");
+    
+    OVMS_PROFILE_SYNC_BEGIN("custom_node execute");
     int result = library.execute(
         inputTensors.get(),
         inputTensorsCount,
@@ -66,6 +71,7 @@ Status CustomNodeSession::execute(PipelineEventQueue& notifyEndQueue, Node& node
         parameters.get(),
         parametersCount,
         customNodeLibraryInternalManager);
+    OVMS_PROFILE_SYNC_END("custom_node execute");
     this->timer->stop("execution");
     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Custom node execution processing time for node {}; session: {} - {} ms",
         this->getName(),

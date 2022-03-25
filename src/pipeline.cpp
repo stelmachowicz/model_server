@@ -27,6 +27,8 @@
 #include "node.hpp"
 #include "pipelineeventqueue.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 Pipeline::~Pipeline() = default;
 
@@ -80,6 +82,7 @@ void setFailIfNotFailEarlier(ovms::Status& earlierStatusCode, ovms::Status& newF
     }
 
 Status Pipeline::execute() {
+    OVMS_PROFILE_FUNCTION();
     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Started execution of pipeline: {}", getName());
     PipelineEventQueue finishedNodeQueue;
     ovms::Status firstErrorStatus{ovms::StatusCode::OK};
@@ -106,6 +109,7 @@ Status Pipeline::execute() {
         spdlog::trace("Pipeline: {} waiting for message that node finished.", getName());
         auto optionallyFinishedNode = finishedNodeQueue.tryPull(WAIT_FOR_FINISHED_NODE_TIMEOUT_MICROSECONDS);
         if (optionallyFinishedNode) {
+            OVMS_PROFILE_SCOPE("Processing Finished Node");
             auto& [finishedNodeRef, sessionKey] = optionallyFinishedNode.value();
             Node& finishedNode = finishedNodeRef.get();
             SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Pipeline: {} got message that node: {} session: {} finished.", getName(), finishedNode.getName(), sessionKey);
@@ -121,6 +125,7 @@ Status Pipeline::execute() {
             CHECK_AND_LOG_ERROR(finishedNode)
             IF_ERROR_OCCURRED_EARLIER_THEN_BREAK_IF_ALL_STARTED_FINISHED_CONTINUE_OTHERWISE
             auto& nextNodesFromFinished = finishedNode.getNextNodes();
+            OVMS_PROFILE_SYNC_BEGIN("Setting Inputs");
             for (auto& nextNode : nextNodesFromFinished) {
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "setting pipeline: {} node: {} session: {} outputs as inputs for node: {}",
                     getName(), finishedNode.getName(), sessionKey, nextNode.get().getName());
@@ -130,7 +135,9 @@ Status Pipeline::execute() {
                     break;
                 }
             }
+            OVMS_PROFILE_SYNC_END("Setting Inputs");
             finishedNodeOutputTensorMap.clear();
+            OVMS_PROFILE_SYNC_BEGIN("Executing Next Nodes");
             for (auto& nextNode : nextNodesFromFinished) {
                 auto readySessions = nextNode.get().getReadySessions();
                 for (auto sessionKey : readySessions) {
@@ -148,6 +155,7 @@ Status Pipeline::execute() {
                     }
                 }
             }
+            OVMS_PROFILE_SYNC_END("Executing Next Nodes");
             if (startedSessions.size() == finishedSessions.size()) {
                 break;
             }
@@ -181,7 +189,9 @@ Status Pipeline::execute() {
             }
             // else scope could be executed always however it seems most reasonable at the time to
             // free blocked inferRequests from exeuction first rather than free models for reloading
+            OVMS_PROFILE_SYNC_BEGIN("Executing Deferred Nodes #2");
             for (auto it = deferredNodeSessions.begin(); it != deferredNodeSessions.end();) {
+                OVMS_PROFILE_SCOPE("Deferred Node Check");
                 auto& [nodeRef, sessionKey] = *it;
                 auto& node = nodeRef.get();
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Trying to trigger node: {} session: {} execution", node.getName(), sessionKey);
@@ -199,6 +209,7 @@ Status Pipeline::execute() {
                     CHECK_AND_LOG_ERROR(node)
                 }
             }
+            OVMS_PROFILE_SYNC_END("Executing Deferred Nodes");
         }
     }
     return firstErrorStatus;

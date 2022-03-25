@@ -22,6 +22,8 @@
 
 #include "ovinferrequestsqueue.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 struct NodeStreamIdGuard {
@@ -41,6 +43,7 @@ struct NodeStreamIdGuard {
     }
 
     std::optional<int> tryGetId(const uint microseconds = 1) {
+        OVMS_PROFILE_FUNCTION();
         if (!streamId) {
             if (std::future_status::ready == futureStreamId.wait_for(std::chrono::microseconds(microseconds))) {
                 streamId = futureStreamId.get();

@@ -26,11 +26,14 @@
 #include "prediction_service_utils.hpp"
 #include "timer.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 const uint WAIT_FOR_STREAM_ID_TIMEOUT_MICROSECONDS = 1;
 
 Status DLNode::execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue) {
+    OVMS_PROFILE_FUNCTION();
     auto& nodeSession = getNodeSession(sessionKey);
     auto& dlNodeSession = static_cast<DLNodeSession&>(nodeSession);
     return dlNodeSession.execute(notifyEndQueue, WAIT_FOR_STREAM_ID_TIMEOUT_MICROSECONDS, *this);
@@ -94,7 +97,9 @@ Status DLNode::fetchResults(TensorMap& outputs, ov::InferRequest& inferRequest, 
                 }
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} Getting tensor from model: {}, inferRequestStreamId: {}, tensorName: {}",
                     getName(), sessionKey, modelName, sessionKey, realModelOutputName);
+                OVMS_PROFILE_SYNC_BEGIN("ov::InferRequest::get_tensor");
                 const auto tensor = inferRequest.get_tensor(realModelOutputName);
+                OVMS_PROFILE_SYNC_END("ov::InferRequest::get_tensor");
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} Creating copy of tensor from model: {}, tensorName: {}",
                     getName(), sessionKey, modelName, realModelOutputName);
                 ov::Tensor copiedTensor;

@@ -21,6 +21,8 @@
 #include "nodeoutputhandler.hpp"
 #include "timer.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 NodeSession::~NodeSession() = default;
 
@@ -29,6 +31,7 @@ const NodeSessionMetadata& NodeSession::getNodeSessionMetadata() const {
 }
 
 Status NodeSession::setInput(const std::string& inputName, ov::Tensor& tensor, session_id_t shardId) {
+    OVMS_PROFILE_FUNCTION();
     return inputHandler->setInput(inputName, tensor, shardId);
 }
 

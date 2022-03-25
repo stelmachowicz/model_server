@@ -27,6 +27,8 @@
 #include "ov_utils.hpp"
 #include "predict_request_validation_utils.hpp"
 
+#include "profiler.hpp"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
 #include "tensorflow/core/framework/tensor.h"
@@ -35,6 +37,7 @@
 namespace ovms {
 
 Status EntryNode::execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue) {
+    OVMS_PROFILE_FUNCTION();
     // this should be created in EntryNode::SetInputs, or special method for entry node called
     // in event loop can be done in future release while implementing dynamic demultiplexing at
     // entry node

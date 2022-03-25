@@ -23,10 +23,13 @@
 
 #include "tensorinfo.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 // This creates tensor without data ownership.
 ov::Tensor createSharedTensor(ov::element::Type_t precision, const shape_t& shape, void* data) {
+    OVMS_PROFILE_FUNCTION();
     auto tensor = ov::Tensor(precision, shape, data);
     return tensor;
 }
@@ -55,6 +58,7 @@ std::string getTensorMapString(const std::map<std::string, std::shared_ptr<Tenso
 }
 
 Status tensorClone(ov::Tensor& destinationTensor, const ov::Tensor& sourceTensor) {
+    OVMS_PROFILE_FUNCTION();
     destinationTensor = ov::Tensor(sourceTensor.get_element_type(), sourceTensor.get_shape());
 
     if (destinationTensor.get_byte_size() != sourceTensor.get_byte_size()) {

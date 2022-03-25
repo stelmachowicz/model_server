@@ -23,6 +23,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 template <typename T>
@@ -45,6 +47,7 @@ public:
     }
 
     std::optional<T> tryPull(const uint waitDurationMicroseconds) {
+        OVMS_PROFILE_FUNCTION();
         std::unique_lock<std::mutex> lock(mtx);
         if (signal.wait_for(lock,
                 std::chrono::microseconds(waitDurationMicroseconds),

@@ -26,6 +26,8 @@
 #include "status.hpp"
 #include "tensorinfo.hpp"
 
+#include "profiler.hpp"
+
 const uint64_t DEMULTIPLY_LIMIT = 10'000;
 
 namespace ovms {
@@ -56,6 +58,7 @@ Node::Node(const std::string& nodeName, std::optional<int32_t> demultiplyCount, 
 }
 
 Status Node::fetchResults(session_key_t sessionId, SessionResults& nodeSessionOutputs) {
+    OVMS_PROFILE_FUNCTION();
     auto it = nodeSessions.find(sessionId);
 
     auto& nodeSession = it->second;
@@ -83,6 +86,7 @@ void Node::printNodeConnections(const std::string& nodeName, const std::string& 
 }
 
 Status Node::setInputs(const Node& dependency, SessionResults& sessionResults) {
+    OVMS_PROFILE_FUNCTION();
     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "node: {} set inputs from node: {}", getName(), dependency.getName());
     for (auto& [sessionKey, metadataInputsPair] : sessionResults) {
         auto& [metadata, inputs] = metadataInputsPair;
@@ -95,6 +99,7 @@ Status Node::setInputs(const Node& dependency, SessionResults& sessionResults) {
 }
 
 Status Node::setInputs(const Node& dependency, TensorMap& inputs, NodeSessionMetadata& metadata) {
+    OVMS_PROFILE_FUNCTION();
     // mapping for dependency - keeps mapping between dependency output name and this node input name
     const auto& mapping_for_dependency = this->getMappingByDependency(dependency);
     NodeSession* nodeSession = getNodeSession(metadata);
@@ -147,6 +152,7 @@ NodeSession& Node::getNodeSession(const session_key_t& sessionKey) const {
 }
 
 NodeSession* Node::getNodeSession(const NodeSessionMetadata& metadata) {
+    OVMS_PROFILE_FUNCTION();
     session_key_t sessionKey;
     if (gatherFrom) {
         try {
@@ -198,6 +204,7 @@ std::vector<session_key_t> Node::getReadySessions() const {
 }
 
 Status Node::demultiplyOutputs(SessionResults& nodeSessionOutputs) {
+    OVMS_PROFILE_FUNCTION();
     if (!demultiplexCount) {
         SPDLOG_LOGGER_ERROR(dag_executor_logger, "Node: {} called demultiplyOutputs but node does not have demultiplexCount set", getName());
         return StatusCode::INTERNAL_ERROR;
@@ -258,6 +265,7 @@ Status Node::demultiplyOutputs(SessionResults& nodeSessionOutputs) {
 }
 
 Status Node::createShardedTensor(ov::Tensor& dividedTensor, Precision precision, const shape_t& shape, const ov::Tensor& tensor, size_t i, size_t step, const NodeSessionMetadata& metadata, const std::string tensorName) {
+    OVMS_PROFILE_FUNCTION();
     auto status = createSharedTensor(dividedTensor, ovmsPrecisionToIE2Precision(precision), shape);
     if (!status.ok()) {
         return status;

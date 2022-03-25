@@ -16,6 +16,7 @@
 #include "nodeinputhandler.hpp"
 
 #include "logging.hpp"
+#include "profiler.hpp"
 
 namespace ovms {
 
@@ -24,6 +25,7 @@ NodeInputHandler::NodeInputHandler(uint32_t inputsMissingCount) :
 }
 
 Status NodeInputHandler::setInput(const std::string& inputName, ov::Tensor& tensor, session_id_t shardId) {
+    OVMS_PROFILE_FUNCTION();
     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Setting input: {}, shardId: {}", inputName, shardId);
     if (shardId > 0) {
         SPDLOG_LOGGER_ERROR(dag_executor_logger, "Tried to set input: {}, with shardId: {} >0 in NodeInputHandler.", inputName, shardId);
@@ -49,6 +51,7 @@ bool NodeInputHandler::isReady() {
 }
 
 Status NodeInputHandler::notifyFinishedDependency() {
+    OVMS_PROFILE_FUNCTION();
     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Remaining dependencies count for input handler decreased from: {} to: {}", remainingDependencies, remainingDependencies - 1);
     --remainingDependencies;
     return StatusCode::OK;

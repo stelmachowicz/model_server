@@ -23,6 +23,8 @@
 #include "ov_utils.hpp"
 #include "tensorinfo.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 GatherNodeInputHandler::GatherNodeInputHandler(uint32_t inputsMissingCount, const CollapseDetails& collapsingDetails) :
@@ -36,6 +38,7 @@ GatherNodeInputHandler::GatherNodeInputHandler(uint32_t inputsMissingCount, cons
 }
 
 Status GatherNodeInputHandler::setInput(const std::string& inputName, ov::Tensor& tensor, session_id_t shardId) {
+    OVMS_PROFILE_FUNCTION();
     auto inputsShardsIt = shardsStorage.find(inputName);
     if (inputsShardsIt == shardsStorage.end()) {
         shard_map_t shardMap{{shardId, tensor}};
@@ -55,11 +58,13 @@ Status GatherNodeInputHandler::setInput(const std::string& inputName, ov::Tensor
 }
 
 Status GatherNodeInputHandler::notifyFinishedDependency() {
+    OVMS_PROFILE_FUNCTION();
     NodeInputHandler::notifyFinishedDependency();
     if (remainingDependencies > 0) {
         return StatusCode::OK;
     }
     for (auto& [inputName, shardMap] : shardsStorage) {
+        OVMS_PROFILE_SCOPE("Gather Shard");
         const auto shardsCount = shardMap.size();
         SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Consolidating: {} shards for input: {}", shardsCount, inputName);
         session_id_t firstShardId = 0;

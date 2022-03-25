@@ -23,6 +23,8 @@
 #include "node_library.hpp"
 #include "node_library_utils.hpp"
 
+#include "profiler.hpp"
+
 namespace ovms {
 
 CustomNode::CustomNode(
@@ -42,6 +44,7 @@ CustomNode::CustomNode(
 }
 
 Status CustomNode::execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue) {
+    OVMS_PROFILE_FUNCTION();
     auto& nodeSession = getNodeSession(sessionKey);
     auto& customNodeSession = static_cast<CustomNodeSession&>(nodeSession);
     return customNodeSession.execute(notifyEndQueue, *this, this->library, this->libraryParameters, this->parameters.size(), getCNLIMWrapperPtr(customNodeLibraryInternalManager));
@@ -66,6 +69,7 @@ Status CustomNode::fetchResults(NodeSession& nodeSession, SessionResults& nodeSe
 }
 
 Status CustomNode::fetchResults(TensorMap& outputs, session_key_t sessionKey) {
+    OVMS_PROFILE_FUNCTION();
     auto& session = static_cast<CustomNodeSession&>(this->getNodeSession(sessionKey));
     session.clearInputs();
 
