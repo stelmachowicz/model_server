@@ -151,6 +151,28 @@ Status Pipeline::execute() {
             if (startedSessions.size() == finishedSessions.size()) {
                 break;
             }
+            // CVS-82766 Fix 5ms overhead by trying to schedule all defered nodes each time some node has finished.
+            for (auto it = deferredNodeSessions.begin(); it != deferredNodeSessions.end();) {
+                if (finishedNodeQueue.size() > 0) {
+                    break;
+                }
+                auto& [nodeRef, sessionKey] = *it;
+                auto& node = nodeRef.get();
+                SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Trying to trigger node: {} session: {} execution", node.getName(), sessionKey);
+                status = node.execute(sessionKey, finishedNodeQueue);
+                if (status.ok()) {
+                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} is ready", node.getName(), sessionKey);
+                    it = deferredNodeSessions.erase(it);
+                    continue;
+                }
+                it++;
+                if (status == StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET) {
+                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} not ready for execution yet", node.getName(), sessionKey);
+                    status = StatusCode::OK;
+                } else {
+                    CHECK_AND_LOG_ERROR(node)
+                }
+            }
         } else {
             // If error occurred earlier, disarm stream id guards of all deferred nodes and exit
             if (!firstErrorStatus.ok()) {
@@ -182,6 +204,9 @@ Status Pipeline::execute() {
             // else scope could be executed always however it seems most reasonable at the time to
             // free blocked inferRequests from exeuction first rather than free models for reloading
             for (auto it = deferredNodeSessions.begin(); it != deferredNodeSessions.end();) {
+                if (finishedNodeQueue.size() > 0) {
+                    break;
+                }
                 auto& [nodeRef, sessionKey] = *it;
                 auto& node = nodeRef.get();
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Trying to trigger node: {} session: {} execution", node.getName(), sessionKey);
