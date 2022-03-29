@@ -57,13 +57,17 @@ ModelInstance& DLNodeSession::getModelInstance() {
 }
 
 ov::InferRequest& DLNodeSession::getInferRequest(const uint microseconds) {
-    auto& inferRequestsQueue = this->model->getInferRequestsQueue();
-    auto streamIdOpt = this->nodeStreamIdGuard->tryGetId(microseconds);
-    if (!streamIdOpt) {
-        SPDLOG_LOGGER_ERROR(dag_executor_logger, "Failed to get streamId on already executed node: {} session: {}", getName(), getSessionKey());
-        throw std::logic_error("Stream id is empty on already executed node");
-    }
-    return inferRequestsQueue.getInferRequest(streamIdOpt.value());
+    // ireq = this->model->createInferRequest();
+    return *this->inferRequest;
+
+    //auto ireq = this->model->getCompiledModel()
+    // auto& inferRequestsQueue = this->model->getInferRequestsQueue();
+    // auto streamIdOpt = this->nodeStreamIdGuard->tryGetId(microseconds);
+    // if (!streamIdOpt) {
+    //     SPDLOG_LOGGER_ERROR(dag_executor_logger, "Failed to get streamId on already executed node: {} session: {}", getName(), getSessionKey());
+    //     throw std::logic_error("Stream id is empty on already executed node");
+    // }
+    // return inferRequestsQueue.getInferRequest(streamIdOpt.value());
 }
 
 Status DLNodeSession::requestExecuteRequiredResources() {
@@ -84,6 +88,7 @@ Status DLNodeSession::requestExecuteRequiredResources() {
         return status;
     }
     this->nodeStreamIdGuard = std::make_unique<NodeStreamIdGuard>(model->getInferRequestsQueue());
+    this->inferRequest = std::make_unique<ov::InferRequest>(model->createInferRequest());
     return status;
 }
 
@@ -214,7 +219,8 @@ Status DLNodeSession::validate(const ov::Tensor& tensor, const TensorInfo& tenso
 Status DLNodeSession::execute(PipelineEventQueue& notifyEndQueue, uint waitForStreamIdTimeoutMicroseconds, Node& node) {
     OVMS_PROFILE_FUNCTION();
     Status status;
-    if (this->nodeStreamIdGuard == nullptr) {
+    //if (this->nodeStreamIdGuard == nullptr) {
+    if (this->inferRequest == nullptr) {
         status = requestExecuteRequiredResources();
         if (!status.ok()) {
             notifyEndQueue.push({node, getSessionKey()});
@@ -226,8 +232,9 @@ Status DLNodeSession::execute(PipelineEventQueue& notifyEndQueue, uint waitForSt
         SPDLOG_LOGGER_DEBUG(dag_executor_logger, "[Node: {}] Could not acquire stream Id right away", getName());
         return StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET;
     }
-    auto& inferRequestsQueue = this->model->getInferRequestsQueue();
-    auto& inferRequest = inferRequestsQueue.getInferRequest(streamIdOpt.value());
+    //auto& inferRequestsQueue = this->model->getInferRequestsQueue();
+    //auto& inferRequest = inferRequestsQueue.getInferRequest(streamIdOpt.value());
+    auto& inferRequest = *this->inferRequest;
     status = setInputsForInference(inferRequest);
     if (!status.ok()) {
         notifyEndQueue.push({node, getSessionKey()});

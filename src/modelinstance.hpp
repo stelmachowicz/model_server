@@ -458,6 +458,10 @@ public:
         return *inferRequestsQueue;
     }
 
+    ov::InferRequest createInferRequest() {
+        return this->compiledModel->create_infer_request();
+    }
+
     /**
          * @brief Combines plugin config from user with default config calculated at runtime
          *
