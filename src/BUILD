@@ -231,6 +231,16 @@ cc_library(
 )
 
 cc_binary(
+    name = "my_test",
+    srcs = [
+        "my_test.cpp",
+    ],
+    deps = [
+        "@openvino//:openvino",
+    ],
+)
+
+cc_binary(
     name = "libsampleloader.so",
     srcs = [
 	    "example/SampleCustomLoader/sampleCustLoader.cpp",

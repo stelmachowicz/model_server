@@ -79,7 +79,8 @@ Status DLNode::fetchResults(TensorMap& outputs, ov::InferRequest& inferRequest, 
         sessionKey,
         this->getNodeSession(sessionKey).getTimer().elapsed<std::chrono::microseconds>("inference") / 1000);
 
-    static_cast<DLNodeSession&>(this->getNodeSession(sessionKey)).clearInputs();
+    DLNodeSession& session = static_cast<DLNodeSession&>(this->getNodeSession(sessionKey));
+    session.clearInputs();
 
     // Fill outputs map with result tensors. Fetch only those that are required in following nodes.
     for (const auto& node : this->next) {
@@ -98,20 +99,21 @@ Status DLNode::fetchResults(TensorMap& outputs, ov::InferRequest& inferRequest, 
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} Getting tensor from model: {}, inferRequestStreamId: {}, tensorName: {}",
                     getName(), sessionKey, modelName, sessionKey, realModelOutputName);
                 OVMS_PROFILE_SYNC_BEGIN("ov::InferRequest::get_tensor");
-                const auto tensor = inferRequest.get_tensor(realModelOutputName);
+                const auto tensor = inferRequest.get_tensor(realModelOutputName);  // todo: make single path not overwrite results
                 OVMS_PROFILE_SYNC_END("ov::InferRequest::get_tensor");
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} Creating copy of tensor from model: {}, tensorName: {}",
                     getName(), sessionKey, modelName, realModelOutputName);
-                ov::Tensor copiedTensor;
-                auto status = tensorClone(copiedTensor, tensor);
-                if (!status.ok()) {
-                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Could not clone result tensor; node: {}; session: {}; model name: {}; output: {}",
-                        getName(),
-                        this->modelName,
-                        realModelOutputName);
-                    return status;
-                }
-                outputs.emplace(std::make_pair(output_name, std::move(copiedTensor)));
+                // ov::Tensor copiedTensor;
+                // auto status = tensorClone(copiedTensor, tensor);
+                // if (!status.ok()) {
+                //     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Could not clone result tensor; node: {}; session: {}; model name: {}; output: {}",
+                //         getName(),
+                //         this->modelName,
+                //         realModelOutputName);
+                //     return status;
+                // }
+                //outputs.emplace(std::make_pair(output_name, std::move(copiedTensor)));
+                outputs.emplace(std::make_pair(output_name, std::move(tensor)));
             } catch (const ov::Exception& e) {
                 Status status = StatusCode::OV_INTERNAL_SERIALIZATION_ERROR;
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session:{} Error during getting tensor {}; exception message: {}", getName(), sessionKey, status.string(), e.what());

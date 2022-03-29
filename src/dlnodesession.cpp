@@ -277,6 +277,17 @@ Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest) {
                 inferRequest.set_tensor(realModelInputName, tensor);
             }
         }
+
+        OVMS_PROFILE_SYNC_BEGIN("Bottleneck");
+        OVTensorQueue& queue = this->model->getTensorQueue();
+        this->outputTensorStreamId = queue.getIdleStream().get();  // allocate if cannot get?
+        PreallocatedTensorMap& map = queue.getInferRequest(this->outputTensorStreamId);
+
+        for (auto& [name, tensor] : map) {
+            inferRequest.set_tensor(name, tensor);
+        }
+        OVMS_PROFILE_SYNC_END("Bottleneck");
+
         // OV implementation the ov::Exception is not
         // a base class for all other exceptions thrown from OV.
         // OV can throw exceptions derived from std::logic_error.

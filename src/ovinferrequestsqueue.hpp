@@ -23,6 +23,8 @@
 #include <queue>
 #include <thread>
 #include <vector>
+#include <unordered_map>
+#include <string>
 
 #include <openvino/openvino.hpp>
 #include <spdlog/spdlog.h>
@@ -38,6 +40,23 @@ public:
         for (int i = 0; i < streamsLength; ++i) {
             streams[i] = i;
             inferRequests.push_back(compiledModel.create_infer_request());
+        }
+    }
+};
+
+using PreallocatedTensorMap = std::unordered_map<std::string, ov::Tensor>;
+
+class OVTensorQueue : public Queue<PreallocatedTensorMap> {
+public:
+    OVTensorQueue(ov::Model& model, int streamsLength) :
+        Queue(streamsLength) {
+        for (int i = 0; i < streamsLength; ++i) {
+            streams[i] = i;
+            PreallocatedTensorMap map;
+            for (auto& output : model.outputs()) {
+                map[output.get_any_name()] = ov::Tensor(output.get_element_type(), output.get_shape());
+            }
+            inferRequests.emplace_back(std::move(map));
         }
     }
 };

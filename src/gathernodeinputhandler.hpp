@@ -40,4 +40,5 @@ public:
     Status setInput(const std::string& inputName, ov::Tensor& tensor, session_id_t shardId) override;
     Status notifyFinishedDependency() override;
 };
+
 }  // namespace ovms

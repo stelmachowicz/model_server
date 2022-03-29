@@ -240,6 +240,7 @@ private:
          * @brief OpenVINO inference execution stream pool
          */
     std::unique_ptr<OVInferRequestsQueue> inferRequestsQueue;
+    std::unique_ptr<OVTensorQueue> tensorQueue;
 
     /**
          * @brief Holds current usage count in predict requests
@@ -456,6 +457,9 @@ public:
          */
     OVInferRequestsQueue& getInferRequestsQueue() {
         return *inferRequestsQueue;
+    }
+    OVTensorQueue& getTensorQueue() {
+        return *tensorQueue;
     }
 
     /**

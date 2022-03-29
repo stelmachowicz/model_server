@@ -768,6 +768,7 @@ Status ModelInstance::prepareInferenceRequestsQueue(const ModelConfig& config) {
         return Status(StatusCode::INVALID_NIREQ, "Exceeded allowed nireq value");
     }
     inferRequestsQueue = std::make_unique<OVInferRequestsQueue>(*compiledModel, numberOfParallelInferRequests);
+    tensorQueue = std::make_unique<OVTensorQueue>(*model, numberOfParallelInferRequests);
     SPDLOG_INFO("Loaded model {}; version: {}; batch size: {}; No of InferRequests: {}",
         getName(),
         getVersion(),
@@ -1057,6 +1058,7 @@ void ModelInstance::unloadModelComponents() {
         std::this_thread::sleep_for(std::chrono::milliseconds(UNLOAD_AVAILABILITY_CHECKING_INTERVAL_MILLISECONDS));
     }
     inferRequestsQueue.reset();
+    tensorQueue.reset();
     compiledModel.reset();
     model.reset();
     outputsInfo.clear();
