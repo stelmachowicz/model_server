@@ -38,6 +38,8 @@ namespace ovms {
 using TensorNames = std::vector<std::string>;
 using session_key_t = std::string;
 
+class Pipeline;
+
 class Node {
 protected:
     std::string nodeName;
@@ -61,7 +63,7 @@ public:
 
     const std::string& getName() const { return this->nodeName; }
 
-    virtual Status execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue) = 0;
+    virtual Status execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) = 0;
     Status fetchResults(session_key_t sessionId, SessionResults& nodeSessionOutputs);
 
 protected:

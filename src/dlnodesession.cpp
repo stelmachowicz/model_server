@@ -211,7 +211,7 @@ Status DLNodeSession::validate(const ov::Tensor& tensor, const TensorInfo& tenso
     return StatusCode::OK;
 }
 
-Status DLNodeSession::execute(PipelineEventQueue& notifyEndQueue, uint waitForStreamIdTimeoutMicroseconds, Node& node) {
+Status DLNodeSession::execute(PipelineEventQueue& notifyEndQueue, uint waitForStreamIdTimeoutMicroseconds, Node& node, Pipeline& pipeline) {
     OVMS_PROFILE_FUNCTION();
     Status status;
     if (this->nodeStreamIdGuard == nullptr) {
@@ -228,7 +228,7 @@ Status DLNodeSession::execute(PipelineEventQueue& notifyEndQueue, uint waitForSt
     }
     auto& inferRequestsQueue = this->model->getInferRequestsQueue();
     auto& inferRequest = inferRequestsQueue.getInferRequest(streamIdOpt.value());
-    status = setInputsForInference(inferRequest);
+    status = setInputsForInference(inferRequest, pipeline);
     if (!status.ok()) {
         notifyEndQueue.push({node, getSessionKey()});
         return status;
@@ -250,7 +250,7 @@ Status DLNodeSession::getRealInputName(const std::string& alias, std::string* re
     return StatusCode::OK;
 }
 
-Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest) {
+Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest, Pipeline& pipeline) {
     OVMS_PROFILE_FUNCTION();
     Status status = StatusCode::OK;
     try {
@@ -278,15 +278,18 @@ Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest) {
             }
         }
 
-        OVMS_PROFILE_SYNC_BEGIN("Bottleneck");
+        OVMS_PROFILE_SYNC_BEGIN("Bottleneck Acquire");
         OVTensorQueue& queue = this->model->getTensorQueue();
         this->outputTensorStreamId = queue.getIdleStream().get();  // allocate if cannot get?
+        std::cout << "Acquiring Stream ID " << this->outputTensorStreamId << std::endl;
         PreallocatedTensorMap& map = queue.getInferRequest(this->outputTensorStreamId);
 
         for (auto& [name, tensor] : map) {
             inferRequest.set_tensor(name, tensor);
+            pipeline.saveTensor(queue, this->outputTensorStreamId); // queue can get deallocated by then.
         }
-        OVMS_PROFILE_SYNC_END("Bottleneck");
+        std::cout << "Finished acquiring" << std::endl;
+        OVMS_PROFILE_SYNC_END("Bottleneck Acquire");
 
         // OV implementation the ov::Exception is not
         // a base class for all other exceptions thrown from OV.

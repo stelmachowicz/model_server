@@ -35,7 +35,7 @@ Status ExitNode::fetchResults(NodeSession& nodeSession, SessionResults& nodeSess
     return this->fetchResults(exitNodeSession.getInputTensors());
 }
 
-Status ExitNode::execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue) {
+Status ExitNode::execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) {
     notifyEndQueue.push(NodeSessionKeyPair(*this, sessionId));
     return StatusCode::OK;
 }

@@ -43,7 +43,7 @@ CustomNode::CustomNode(
     customNodeLibraryInternalManager(customNodeLibraryInternalManager) {
 }
 
-Status CustomNode::execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue) {
+Status CustomNode::execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) {
     OVMS_PROFILE_FUNCTION();
     auto& nodeSession = getNodeSession(sessionKey);
     auto& customNodeSession = static_cast<CustomNodeSession&>(nodeSession);

@@ -35,6 +35,7 @@ class Node;
 class NodeStreamIdGuard;
 class ModelInstanceUnloadGuard;
 class TensorInfo;
+class Pipeline;
 
 class DLNodeSession : public NodeSession {
     std::shared_ptr<ModelInstance> model;
@@ -62,9 +63,9 @@ private:
 public:
     Status prepareInputsAndModelForInference();
     Status validate(const ov::Tensor& tensor, const TensorInfo& info);
-    Status execute(PipelineEventQueue& notifyEndQueue, uint waitForStreamIdTimeoutMicroseconds, Node& node);
+    Status execute(PipelineEventQueue& notifyEndQueue, uint waitForStreamIdTimeoutMicroseconds, Node& node, Pipeline& pipeline);
     Status executeInference(PipelineEventQueue& notifyEndQueue, ov::InferRequest&, Node& node);
-    Status setInputsForInference(ov::InferRequest& inferRequest);
+    Status setInputsForInference(ov::InferRequest& inferRequest, Pipeline& pipeline);
     Status getRealInputName(const std::string& alias, std::string* result) const;
     void release() override;
 

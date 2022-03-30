@@ -43,7 +43,7 @@ public:
 
     // Exit node does not have execute logic.
     // It serializes its received input tensors to proto in ::fetchResults
-    Status execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue) override;
+    Status execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) override;
 
 protected:
     Status fetchResults(const TensorMap& outputs);

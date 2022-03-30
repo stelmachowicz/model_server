@@ -23,6 +23,7 @@
 
 #include "aliases.hpp"
 #include "status.hpp"
+#include "ovinferrequestsqueue.hpp"
 
 namespace ovms {
 
@@ -38,6 +39,8 @@ class Pipeline {
     EntryNode& entry;
     ExitNode& exit;
 
+    std::vector<std::unique_ptr<SavedTensor>> savedTensors;
+
 public:
     Pipeline(EntryNode& entry, ExitNode& exit, const std::string& name = "default_name");
 
@@ -52,6 +55,10 @@ public:
     Status execute();
     const std::string& getName() const {
         return name;
+    }
+
+    void saveTensor(OVTensorQueue& queue, int streamID) {
+        this->savedTensors.emplace_back(std::make_unique<SavedTensor>(queue, streamID));
     }
 
 private:

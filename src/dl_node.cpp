@@ -32,11 +32,11 @@ namespace ovms {
 
 const uint WAIT_FOR_STREAM_ID_TIMEOUT_MICROSECONDS = 1;
 
-Status DLNode::execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue) {
+Status DLNode::execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) {
     OVMS_PROFILE_FUNCTION();
     auto& nodeSession = getNodeSession(sessionKey);
     auto& dlNodeSession = static_cast<DLNodeSession&>(nodeSession);
-    return dlNodeSession.execute(notifyEndQueue, WAIT_FOR_STREAM_ID_TIMEOUT_MICROSECONDS, *this);
+    return dlNodeSession.execute(notifyEndQueue, WAIT_FOR_STREAM_ID_TIMEOUT_MICROSECONDS, *this, pipeline);
 }
 
 Status DLNode::fetchResults(NodeSession& nodeSession, SessionResults& nodeSessionOutputs) {

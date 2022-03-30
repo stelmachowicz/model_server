@@ -30,6 +30,7 @@
 #include <spdlog/spdlog.h>
 
 #include "queue.hpp"
+#include "profiler.hpp"
 
 namespace ovms {
 
@@ -58,6 +59,25 @@ public:
             }
             inferRequests.emplace_back(std::move(map));
         }
+    }
+};
+
+class SavedTensor {
+    OVTensorQueue& queue;
+    int streamID;
+    //ov::Tensor tensor;
+public:
+    SavedTensor(OVTensorQueue& queue, int streamID) :
+        queue(queue),
+        streamID(streamID)
+        //tensor(tensor)
+    {
+    }
+    SavedTensor(const SavedTensor&) = delete;
+    ~SavedTensor() {
+        OVMS_PROFILE_SCOPE("Bottleneck Free");
+        queue.returnStream(streamID);
+        std::cout << "Freed Stream ID " << streamID << std::endl;
     }
 };
 

@@ -36,7 +36,7 @@
 
 namespace ovms {
 
-Status EntryNode::execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue) {
+Status EntryNode::execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) {
     OVMS_PROFILE_FUNCTION();
     // this should be created in EntryNode::SetInputs, or special method for entry node called
     // in event loop can be done in future release while implementing dynamic demultiplexing at

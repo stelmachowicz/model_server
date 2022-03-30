@@ -57,7 +57,7 @@ public:
         nodeOutputNameAlias(nodeOutputNameAlias) {
     }
 
-    Status execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue) override;
+    Status execute(session_key_t sessionKey, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) override;
 
     Status fetchResults(NodeSession& nodeSession, SessionResults& nodeSessionOutputs) override;
 

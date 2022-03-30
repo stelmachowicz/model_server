@@ -94,7 +94,7 @@ Status Pipeline::execute() {
     // that the one in EntryNode::execute();
     auto entrySessionKey = meta.getSessionKey();
     startedSessions.emplace(entry.getName() + entrySessionKey);
-    ovms::Status status = entry.execute(entrySessionKey, finishedNodeQueue);  // first node will triger first message
+    ovms::Status status = entry.execute(entrySessionKey, finishedNodeQueue, *this);  // first node will triger first message
     if (!status.ok()) {
         SPDLOG_LOGGER_WARN(dag_executor_logger, "Executing pipeline: {} node: {} failed with: {}",
             getName(), entry.getName(), status.string());
@@ -143,7 +143,7 @@ Status Pipeline::execute() {
                 for (auto sessionKey : readySessions) {
                     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Started execution of pipeline: {} node: {} session: {}", getName(), nextNode.get().getName(), sessionKey);
                     startedSessions.emplace(nextNode.get().getName() + sessionKey);
-                    status = nextNode.get().execute(sessionKey, finishedNodeQueue);
+                    status = nextNode.get().execute(sessionKey, finishedNodeQueue, *this);
                     if (status == StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET) {
                         SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} not ready for execution yet", nextNode.get().getName(), sessionKey);
                         deferredNodeSessions.emplace_back(nextNode.get(), sessionKey);
@@ -195,7 +195,7 @@ Status Pipeline::execute() {
                 auto& [nodeRef, sessionKey] = *it;
                 auto& node = nodeRef.get();
                 SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Trying to trigger node: {} session: {} execution", node.getName(), sessionKey);
-                status = node.execute(sessionKey, finishedNodeQueue);
+                status = node.execute(sessionKey, finishedNodeQueue, *this);
                 if (status.ok()) {
                     SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} is ready", node.getName(), sessionKey);
                     it = deferredNodeSessions.erase(it);

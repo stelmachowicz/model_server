@@ -45,7 +45,7 @@ public:
         request(request),
         inputsInfo(inputsInfo) {}
 
-    Status execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue) override;
+    Status execute(session_key_t sessionId, PipelineEventQueue& notifyEndQueue, Pipeline& pipeline) override;
 
     Status fetchResults(NodeSession& nodeSession, SessionResults& nodeSessionOutputs) override;
 
