@@ -63,18 +63,25 @@ public:
 };
 
 class SavedTensor {
+public:
+    bool armed = true;
     OVTensorQueue& queue;
     int streamID;
     //ov::Tensor tensor;
-public:
     SavedTensor(OVTensorQueue& queue, int streamID) :
         queue(queue),
         streamID(streamID)
         //tensor(tensor)
     {
     }
-    SavedTensor(const SavedTensor&) = delete;
+    SavedTensor(const SavedTensor& e) = delete;
+    SavedTensor(SavedTensor&& e) : queue(e.queue), streamID(e.streamID) {
+        e.armed = false;
+    }
     ~SavedTensor() {
+        if (!armed) {
+            return;
+        }
         OVMS_PROFILE_SCOPE("Bottleneck Free");
         queue.returnStream(streamID);
         std::cout << "Freed Stream ID " << streamID << std::endl;

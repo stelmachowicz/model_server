@@ -280,15 +280,30 @@ Status DLNodeSession::setInputsForInference(ov::InferRequest& inferRequest, Pipe
 
         OVMS_PROFILE_SYNC_BEGIN("Bottleneck Acquire");
         OVTensorQueue& queue = this->model->getTensorQueue();
+        OVMS_PROFILE_SYNC_BEGIN("GetIdleStream");
         this->outputTensorStreamId = queue.getIdleStream().get();  // allocate if cannot get?
-        std::cout << "Acquiring Stream ID " << this->outputTensorStreamId << std::endl;
-        PreallocatedTensorMap& map = queue.getInferRequest(this->outputTensorStreamId);
+        OVMS_PROFILE_SYNC_END("GetIdleStream");
 
-        for (auto& [name, tensor] : map) {
-            inferRequest.set_tensor(name, tensor);
+        //std::cout << "Acquiring Stream ID " << this->outputTensorStreamId << std::endl;
+        
+        OVMS_PROFILE_SYNC_BEGIN("GetPreallocatedTensors");
+        PreallocatedTensorMap& map = queue.getInferRequest(this->outputTensorStreamId);
+        OVMS_PROFILE_SYNC_END("GetPreallocatedTensors");
+
+        OVMS_PROFILE_SYNC_BEGIN("SetTensor");
+        //for (const auto& [name, tensor] : map) {
+        for (auto it = map.begin(); it != map.end(); it++) {
+            const std::string& name = it->first;
+            ov::Tensor& tensor = it->second;
+            OVMS_PROFILE_SYNC_BEGIN("ov::InferRequest::set_tensor");
+            inferRequest.set_tensor(name, tensor);                          // (1,6220800)                  (1,7) (1,4)
+            OVMS_PROFILE_SYNC_END("ov::InferRequest::set_tensor");
+            OVMS_PROFILE_SYNC_BEGIN("Pipeline::saveTensor");
             pipeline.saveTensor(queue, this->outputTensorStreamId); // queue can get deallocated by then.
+            OVMS_PROFILE_SYNC_END("Pipeline::saveTensor");
         }
-        std::cout << "Finished acquiring" << std::endl;
+        OVMS_PROFILE_SYNC_END("Save Tensor");
+        //std::cout << "Finished acquiring" << std::endl;
         OVMS_PROFILE_SYNC_END("Bottleneck Acquire");
 
         // OV implementation the ov::Exception is not

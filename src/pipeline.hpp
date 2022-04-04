@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <list>
 
 #include "aliases.hpp"
 #include "status.hpp"
@@ -39,7 +40,8 @@ class Pipeline {
     EntryNode& entry;
     ExitNode& exit;
 
-    std::vector<std::unique_ptr<SavedTensor>> savedTensors;
+    std::list<SavedTensor> savedTensors;
+    ////std::vector<std::unique_ptr<SavedTensor>> savedTensors;
 
 public:
     Pipeline(EntryNode& entry, ExitNode& exit, const std::string& name = "default_name");
@@ -58,7 +60,8 @@ public:
     }
 
     void saveTensor(OVTensorQueue& queue, int streamID) {
-        this->savedTensors.emplace_back(std::make_unique<SavedTensor>(queue, streamID));
+        //this->savedTensors.emplace_back(std::make_unique<SavedTensor>(queue, streamID));
+        this->savedTensors.emplace_back(SavedTensor{queue, streamID});
     }
 
 private:
