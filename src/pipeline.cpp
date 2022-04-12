@@ -119,7 +119,6 @@ Status Pipeline::execute() {
                 finishedNode.release(sessionKey);
             }
             IF_ERROR_OCCURRED_EARLIER_THEN_BREAK_IF_ALL_STARTED_FINISHED_CONTINUE_OTHERWISE
-            TensorMap finishedNodeOutputTensorMap;
             SessionResults sessionResults;
             SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Fetching results of pipeline: {} node: {} session: {}", getName(), finishedNode.getName(), sessionKey);
             status = finishedNode.fetchResults(sessionKey, sessionResults);
@@ -135,7 +134,29 @@ Status Pipeline::execute() {
                     break;
                 }
             }
-            finishedNodeOutputTensorMap.clear();
+            //
+            for (auto it = deferredNodeSessions.begin(); it != deferredNodeSessions.end();) {
+                if (finishedNodeQueue.size() > 0) {
+                    break;
+                }
+                auto& [nodeRef, sessionKey] = *it;
+                auto& node = nodeRef.get();
+                SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Trying to trigger node: {} session: {} execution", node.getName(), sessionKey);
+                status = node.execute(sessionKey, finishedNodeQueue);
+                if (status.ok()) {
+                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} is ready", node.getName(), sessionKey);
+                    it = deferredNodeSessions.erase(it);
+                    continue;
+                }
+                it++;
+                if (status == StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET) {
+                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} not ready for execution yet", node.getName(), sessionKey);
+                    status = StatusCode::OK;
+                } else {
+                    CHECK_AND_LOG_ERROR(node)
+                }
+            }
+            //
             for (auto& nextNode : nextNodesFromFinished) {
                 auto readySessions = nextNode.get().getReadySessions();
                 for (auto sessionKey : readySessions) {
