@@ -134,6 +134,23 @@ Status Pipeline::execute() {
                     break;
                 }
             }
+            for (auto& nextNode : nextNodesFromFinished) {
+                auto readySessions = nextNode.get().getReadySessions();
+                for (auto sessionKey : readySessions) {
+                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Started execution of pipeline: {} node: {} session: {}", getName(), nextNode.get().getName(), sessionKey);
+                    startedSessions.emplace(nextNode.get().getName() + sessionKey);
+                    status = nextNode.get().execute(sessionKey, finishedNodeQueue);
+                    if (status == StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET) {
+                        SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} not ready for execution yet", nextNode.get().getName(), sessionKey);
+                        deferredNodeSessions.emplace_back(nextNode.get(), sessionKey);
+                        status = StatusCode::OK;
+                    }
+                    CHECK_AND_LOG_ERROR(nextNode.get())
+                    if (!firstErrorStatus.ok()) {
+                        break;
+                    }
+                }
+            }
             //
             for (auto it = deferredNodeSessions.begin(); it != deferredNodeSessions.end();) {
                 if (finishedNodeQueue.size() > 0) {
@@ -157,23 +174,6 @@ Status Pipeline::execute() {
                 }
             }
             //
-            for (auto& nextNode : nextNodesFromFinished) {
-                auto readySessions = nextNode.get().getReadySessions();
-                for (auto sessionKey : readySessions) {
-                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Started execution of pipeline: {} node: {} session: {}", getName(), nextNode.get().getName(), sessionKey);
-                    startedSessions.emplace(nextNode.get().getName() + sessionKey);
-                    status = nextNode.get().execute(sessionKey, finishedNodeQueue);
-                    if (status == StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET) {
-                        SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} not ready for execution yet", nextNode.get().getName(), sessionKey);
-                        deferredNodeSessions.emplace_back(nextNode.get(), sessionKey);
-                        status = StatusCode::OK;
-                    }
-                    CHECK_AND_LOG_ERROR(nextNode.get())
-                    if (!firstErrorStatus.ok()) {
-                        break;
-                    }
-                }
-            }
             if (startedSessions.size() == finishedSessions.size()) {
                 break;
             }
