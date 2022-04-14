@@ -283,6 +283,7 @@ private:
          * @param config
          */
     Status loadInputTensors(const ModelConfig& config, const DynamicModelParameter& parameter = DynamicModelParameter());
+    Status loadInputTensors2(const ModelConfig& config, const DynamicModelParameter& parameter = DynamicModelParameter());
 
     /**
          * @brief Internal method for loading outputs
@@ -290,6 +291,7 @@ private:
          * @param config
          */
     void loadOutputTensors(const ModelConfig& config);
+    void loadOutputTensors2(const ModelConfig& config);
 
     /**
          * @brief Configures batchsize
@@ -337,6 +339,14 @@ public:
          * @brief Destroy the Model Instance object
          */
     virtual ~ModelInstance() = default;
+
+    // InferenceEngine::CNNNetwork getNetwork() const {
+    //     if (!this->network && this->execNetwork) {
+    //         return this->execNetwork->GetExecGraphInfo();
+    //     } else {
+    //         return *this->network;
+    //     }
+    // }
 
     /**
          * @brief Increases predict requests usage count
@@ -410,7 +420,7 @@ public:
          * @return batch size
          */
     virtual size_t getBatchSize() const {
-        return network->getBatchSize();
+        return this->execNetwork->GetInputsInfo().begin()->second->getTensorDesc().getDims()[0];
     }
 
     /**

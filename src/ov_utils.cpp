@@ -92,6 +92,27 @@ std::string getNetworkInputsInfoString(const InferenceEngine::InputsDataMap& inp
     return stringStream.str();
 }
 
+std::string getNetworkInputsInfoString2(const InferenceEngine::ConstInputsDataMap& inputsInfo, const ModelConfig& config) {
+    std::stringstream stringStream;
+
+    for (const auto& pair : inputsInfo) {
+        const auto& name = pair.first;
+        auto inputInfo = pair.second;
+
+        auto precision = inputInfo->getPrecision();
+        auto layout = inputInfo->getTensorDesc().getLayout();
+        auto shape = inputInfo->getTensorDesc().getDims();
+        auto effectiveShape = inputInfo->getTensorDesc().getBlockingDesc().getBlockDims();
+
+        auto mappingName = config.getMappingInputByKey(name);
+
+        stringStream << "\nInput name: " << name << "; mapping_name: " << mappingName << "; shape: " << TensorInfo::shapeToString(shape)
+                     << "; effective shape: " << TensorInfo::shapeToString(effectiveShape) << "; precision: " << TensorInfo::getPrecisionAsString(precision)
+                     << "; layout: " << TensorInfo::getStringFromLayout(layout);
+    }
+    return stringStream.str();
+}
+
 std::string getTensorMapString(const std::map<std::string, std::shared_ptr<TensorInfo>>& inputsInfo) {
     std::stringstream stringStream;
     for (const auto& pair : inputsInfo) {

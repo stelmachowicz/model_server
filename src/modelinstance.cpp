@@ -174,9 +174,29 @@ Status ModelInstance::loadInputTensors(const ModelConfig& config, const DynamicM
     return StatusCode::OK;
 }
 
+Status ModelInstance::loadInputTensors2(const ModelConfig& config, const DynamicModelParameter& parameter) {
+    this->inputsInfo.clear();
+
+    for (const auto& pair : this->execNetwork->GetInputsInfo()) {
+        const auto& name = pair.first;
+        auto input = pair.second;
+
+        // Data from network
+        auto precision = input->getPrecision();
+        auto layout = input->getTensorDesc().getLayout();  // input->getLayout();
+        auto shape = input->getTensorDesc().getDims();
+
+        auto mappingName = config.getMappingInputByKey(name);
+        auto tensor = std::make_shared<TensorInfo>(name, mappingName, precision, shape, layout);
+        this->inputsInfo[tensor->getMappedName()] = std::move(tensor);
+    }
+    SPDLOG_INFO("Final network inputs: {}", getNetworkInputsInfoString2(this->execNetwork->GetInputsInfo(), config));
+    return StatusCode::OK;
+}
+
 void ModelInstance::loadOutputTensors(const ModelConfig& config) {
     this->outputsInfo.clear();
-    for (const auto& pair : network->getOutputsInfo()) {
+    for (const auto& pair : this->network->getOutputsInfo()) {
         const auto& name = pair.first;
         auto output = pair.second;
 
@@ -193,6 +213,32 @@ void ModelInstance::loadOutputTensors(const ModelConfig& config) {
         }
 
         output->setLayout(layout);
+
+        auto shape = output->getDims();
+        auto effectiveShape = output->getTensorDesc().getBlockingDesc().getBlockDims();
+        auto mappingName = config.getMappingOutputByKey(name);
+        auto tensor = std::make_shared<TensorInfo>(name, mappingName, precision, shape, layout);
+        std::string precision_str = tensor->getPrecisionAsString();
+        this->outputsInfo[tensor->getMappedName()] = std::move(tensor);
+        std::stringstream shape_stream;
+        std::copy(shape.begin(), shape.end(), std::ostream_iterator<size_t>(shape_stream, " "));
+        std::stringstream effective_shape_stream;
+        std::copy(effectiveShape.begin(), effectiveShape.end(), std::ostream_iterator<size_t>(effective_shape_stream, " "));
+        SPDLOG_INFO("Output name: {}; mapping name: {}; shape: {}; effective shape {}; precision: {}; layout: {}",
+            name, mappingName, shape_stream.str(), effective_shape_stream.str(), precision_str,
+            TensorInfo::getStringFromLayout(output->getLayout()));
+    }
+}
+
+void ModelInstance::loadOutputTensors2(const ModelConfig& config) {
+    this->outputsInfo.clear();
+    for (const auto& pair : this->execNetwork->GetOutputsInfo()) {
+        const auto& name = pair.first;
+        auto output = pair.second;
+
+        // Data from network
+        auto precision = output->getPrecision();
+        auto layout = output->getTensorDesc().getLayout();  // output->getLayout();
 
         auto shape = output->getDims();
         auto effectiveShape = output->getTensorDesc().getBlockingDesc().getBlockDims();
@@ -293,9 +339,22 @@ std::unique_ptr<InferenceEngine::CNNNetwork> ModelInstance::loadOVCNNNetworkPtr(
     return std::make_unique<InferenceEngine::CNNNetwork>(ieCore.ReadNetwork(modelFile));
 }
 
+inline bool ends_with(std::string const& value, std::string const& ending) {
+    if (ending.size() > value.size())
+        return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
 Status ModelInstance::loadOVCNNNetwork() {
     auto& modelFile = modelFiles[0];
     SPDLOG_DEBUG("Try reading model file: {}", modelFile);
+
+    bool isBlobFormat = ends_with(modelFile, ".blob");
+    SPDLOG_DEBUG("Is blob format: {}", isBlobFormat);
+    if (isBlobFormat) {
+        return StatusCode::OK;
+    }
+
     try {
         network = loadOVCNNNetworkPtr(modelFile);
     } catch (std::exception& e) {
@@ -356,7 +415,17 @@ Status ModelInstance::loadOVCNNNetworkUsingCustomLoader() {
 }
 
 void ModelInstance::loadExecutableNetworkPtr(const plugin_config_t& pluginConfig) {
-    execNetwork = std::make_shared<InferenceEngine::ExecutableNetwork>(ieCore.LoadNetwork(*network, targetDevice, pluginConfig));
+    auto& modelFile = modelFiles[0];
+
+    bool isBlobFormat = ends_with(modelFile, ".blob");
+    SPDLOG_DEBUG("Is blob format: {}", isBlobFormat);
+
+    if (isBlobFormat) {
+        std::ifstream file{modelFile};
+        execNetwork = std::make_shared<InferenceEngine::ExecutableNetwork>(ieCore.ImportNetwork(file, targetDevice, pluginConfig));
+    } else {
+        execNetwork = std::make_shared<InferenceEngine::ExecutableNetwork>(ieCore.LoadNetwork(*network, targetDevice, pluginConfig));
+    }
 }
 
 plugin_config_t ModelInstance::prepareDefaultPluginConfig(const ModelConfig& config) {
@@ -496,17 +565,28 @@ Status ModelInstance::loadModelImpl(const ModelConfig& config, const DynamicMode
             return status;
         }
 
-        configureBatchSize(this->config, parameter);
-        status = loadInputTensors(this->config, parameter);
-        if (!status.ok()) {
-            this->status.setLoading(ModelVersionStatusErrorCode::UNKNOWN);
-            return status;
+        if (this->network) {
+            configureBatchSize(this->config, parameter);
+            status = loadInputTensors(this->config, parameter);
+            if (!status.ok()) {
+                this->status.setLoading(ModelVersionStatusErrorCode::UNKNOWN);
+                return status;
+            }
+            loadOutputTensors(this->config);
         }
-        loadOutputTensors(this->config);
+
         status = loadOVExecutableNetwork(this->config);
         if (!status.ok()) {
             this->status.setLoading(ModelVersionStatusErrorCode::UNKNOWN);
             return status;
+        }
+        if (!this->network) {
+            status = loadInputTensors2(this->config, parameter);
+            if (!status.ok()) {
+                this->status.setLoading(ModelVersionStatusErrorCode::UNKNOWN);
+                return status;
+            }
+            loadOutputTensors2(this->config);
         }
         status = prepareInferenceRequestsQueue(this->config);
         if (!status.ok()) {
