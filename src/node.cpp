@@ -20,6 +20,7 @@
 #include <sstream>
 #include <vector>
 
+#include "custom_node_output_allocator.hpp"
 #include "logging.hpp"
 #include "nodesession.hpp"
 #include "ov_utils.hpp"
@@ -265,16 +266,21 @@ Status Node::demultiplyOutputs(SessionResults& nodeSessionOutputs) {
 
 Status Node::createShardedTensor(ov::Tensor& dividedTensor, Precision precision, const shape_t& shape, const ov::Tensor& tensor, size_t i, size_t step, const NodeSessionMetadata& metadata, const std::string tensorName) {
     OVMS_PROFILE_FUNCTION();
-    auto status = createSharedTensor(dividedTensor, ovmsPrecisionToIE2Precision(precision), shape);
-    if (!status.ok()) {
-        return status;
-    }
-    if (dividedTensor.get_byte_size() != step) {
-        SPDLOG_LOGGER_ERROR(dag_executor_logger, "Node: {}, session: {} created tensor: {} have wrong byte size: {}, expected: {}",
-            getName(), metadata.getSessionKey(), tensorName, dividedTensor.get_byte_size(), step);
-        return StatusCode::UNKNOWN_ERROR;
-    }
-    memcpy(dividedTensor.data(), (char*)(tensor.data()) + i * step, step);
+
+    auto allocatorImpl = std::make_shared<DemultiplexerAllocator>(tensor, i, step, tensorName);
+    auto allocator = ov::Allocator(allocatorImpl);
+    dividedTensor = ov::Tensor(ov::element::Type(ovmsPrecisionToIE2Precision(precision)), ov::Shape(shape), allocator);
+
+    // auto status = createSharedTensor(dividedTensor, ovmsPrecisionToIE2Precision(precision), shape);
+    // if (!status.ok()) {
+    //     return status;
+    // }
+    // if (dividedTensor.get_byte_size() != step) {
+    //     SPDLOG_LOGGER_ERROR(dag_executor_logger, "Node: {}, session: {} created tensor: {} have wrong byte size: {}, expected: {}",
+    //         getName(), metadata.getSessionKey(), tensorName, dividedTensor.get_byte_size(), step);
+    //     return StatusCode::UNKNOWN_ERROR;
+    // }
+    // memcpy(dividedTensor.data(), (char*)(tensor.data()) + i * step, step);
     return StatusCode::OK;
 }
 }  // namespace ovms

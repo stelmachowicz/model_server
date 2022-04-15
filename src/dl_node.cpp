@@ -78,6 +78,13 @@ Status DLNode::fetchResults(TensorMap& outputs, ov::InferRequest& inferRequest, 
 
     static_cast<DLNodeSession&>(this->getNodeSession(sessionKey)).clearInputs();
 
+    for (const auto& [k, v] : model.getInputsInfo()) {
+        auto tr = inferRequest.get_tensor(k);
+        ov::Tensor tensor(tr.get_element_type(), tr.get_shape());
+        inferRequest.set_tensor(k, tensor);
+        SPDLOG_INFO("XXXXXXXXXX getInputsInfo: {} {}", k, sessionKey);
+    }
+
     // Fill outputs map with result tensors. Fetch only those that are required in following nodes.
     for (const auto& node : this->next) {
         for (const auto& pair : node.get().getMappingByDependency(*this)) {
@@ -115,6 +122,14 @@ Status DLNode::fetchResults(TensorMap& outputs, ov::InferRequest& inferRequest, 
             SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} Tensor with name {} has been prepared", getName(), sessionKey, output_name);
         }
     }
+
+    // for (const auto& [k, v] : model.getOutputsInfo()) {
+    //     auto tr = inferRequest.get_tensor(k);
+    //     ov::Tensor tensor(tr.get_element_type(), tr.get_shape());
+    //     inferRequest.set_tensor(k, tensor);
+    //     SPDLOG_INFO("XXXXXXXXXX getOutputsInfo: {} {}", k, sessionKey);
+    // }
+
     return StatusCode::OK;
 }
 

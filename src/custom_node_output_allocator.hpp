@@ -36,4 +36,19 @@ public:
     bool is_equal(const CustomNodeOutputAllocator& other) const;
     bool is_equal(const AllocatorImpl& other) const override;
 };
+
+class DemultiplexerAllocator : public ov::AllocatorImpl {
+    std::shared_ptr<ov::Tensor> originalTensor;
+    size_t i, step;
+    std::string name;
+
+public:
+    DemultiplexerAllocator(ov::Tensor originalTensor, size_t i, size_t step, const std::string& name);
+    ~DemultiplexerAllocator();
+    void* allocate(const size_t bytes, const size_t alignment = alignof(max_align_t)) override;
+    void deallocate(void* handle, const size_t bytes, size_t alignment = alignof(max_align_t)) override;
+    bool is_equal(const DemultiplexerAllocator& other) const;
+    bool is_equal(const AllocatorImpl& other) const override;
+};
+
 }  // namespace ovms
