@@ -1058,6 +1058,24 @@ void ModelInstance::unloadModelComponents() {
             getName(), getVersion(), predictRequestsHandlesCount);
         std::this_thread::sleep_for(std::chrono::milliseconds(UNLOAD_AVAILABILITY_CHECKING_INTERVAL_MILLISECONDS));
     }
+
+    std::vector<int> toReturn;
+    while (true) {
+        auto id = inferRequestsQueue->tryToGetIdleStream();
+        if (!id.has_value())
+            break;
+        toReturn.emplace_back(id.value());
+        auto& ireq = inferRequestsQueue->getInferRequest(id.value());
+        for (const auto& [k, v] : getInputsInfo()) {
+            ov::Tensor t = ireq.get_tensor(k);
+            ov::Tensor tensor(t.get_element_type(), t.get_shape());
+            ireq.set_tensor(k, tensor);
+        }
+    }
+
+    for (auto id : toReturn)
+        inferRequestsQueue->returnStream(id);
+
     inferRequestsQueue.reset();
     compiledModel.reset();
     model.reset();

@@ -52,25 +52,22 @@ bool CustomNodeOutputAllocator::is_equal(const AllocatorImpl& other) const {
     return this->is_equal(*otherPtr);
 }
 
-DemultiplexerAllocator::DemultiplexerAllocator(ov::Tensor originalTensor, size_t i, size_t step, const std::string& name) : originalTensor(std::make_shared<ov::Tensor>(originalTensor)), i(i), step(step), name(name) {
-    SPDLOG_INFO("Constructor {} {}", i, name);
+DemultiplexerAllocator::DemultiplexerAllocator(const ov::Tensor& pOriginalTensor, size_t i, size_t step) :
+    originalTensor(std::make_shared<ov::Tensor>(pOriginalTensor)),
+    myPtr((void*)((char*)(pOriginalTensor.data()) + i * step)) {
 }
 
 DemultiplexerAllocator::~DemultiplexerAllocator() {
-    SPDLOG_INFO("Destructor {} {}", i, name);
 }
 
 void* DemultiplexerAllocator::allocate(const size_t bytes, const size_t alignment) {
-    SPDLOG_INFO("allocate {} {}", i, name);
-    return (void*)((char*)(originalTensor->data()) + i * step);
+    return myPtr;
 }
 void DemultiplexerAllocator::deallocate(void* handle, const size_t bytes, size_t alignment) {
-    SPDLOG_INFO("deallocate begin {} {}", i, name);
     originalTensor.reset();
-    SPDLOG_INFO("deallocate end {} {}", i, name);
 }
 bool DemultiplexerAllocator::is_equal(const DemultiplexerAllocator& other) const {
-    return originalTensor->data() == other.originalTensor->data() && i == other.i && step == other.step;
+    return originalTensor->data() == other.originalTensor->data() && myPtr == other.myPtr;
 }
 bool DemultiplexerAllocator::is_equal(const AllocatorImpl& other) const {
     const DemultiplexerAllocator* otherPtr = dynamic_cast<const DemultiplexerAllocator*>(&other);

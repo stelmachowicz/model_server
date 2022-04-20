@@ -78,12 +78,12 @@ Status DLNode::fetchResults(TensorMap& outputs, ov::InferRequest& inferRequest, 
 
     static_cast<DLNodeSession&>(this->getNodeSession(sessionKey)).clearInputs();
 
-    for (const auto& [k, v] : model.getInputsInfo()) {
-        auto tr = inferRequest.get_tensor(k);
-        ov::Tensor tensor(tr.get_element_type(), tr.get_shape());
-        inferRequest.set_tensor(k, tensor);
-        SPDLOG_INFO("XXXXXXXXXX getInputsInfo: {} {}", k, sessionKey);
-    }
+    // for (const auto& [k, v] : model.getInputsInfo()) {
+    //     auto tr = inferRequest.get_tensor(k);
+    //     ov::Tensor tensor(tr.get_element_type(), tr.get_shape());
+    //     inferRequest.set_tensor(k, tensor);
+    //     SPDLOG_INFO("XXXXXXXXXX getInputsInfo: {} {}", k, sessionKey);
+    // }
 
     // Fill outputs map with result tensors. Fetch only those that are required in following nodes.
     for (const auto& node : this->next) {

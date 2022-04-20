@@ -248,13 +248,10 @@ Status Node::demultiplyOutputs(SessionResults& nodeSessionOutputs) {
             OVMS_PROFILE_SCOPE("Create Shard");
             ov::Tensor dividedTensor;
             this->createShardedTensor(dividedTensor, ovElementTypeToOvmsPrecision(tensor.get_element_type()), newDims, tensor, i, step, metadata, tensorName);
-            std::stringstream ss;
-            ss << "Node: " << getName() << " input demultiplied: " << tensorName
-               << "; Actual: " << TensorInfo::shapeToString(dividedTensor.get_shape());
-            SPDLOG_LOGGER_DEBUG(dag_executor_logger, "{}", ss.str());
-            auto it = nodeSessionOutputs.find(newSessionMetadatas[i].getSessionKey());
+            auto sessionKey = newSessionMetadatas[i].getSessionKey();
+            auto it = nodeSessionOutputs.find(sessionKey);
             if (it == nodeSessionOutputs.end()) {
-                nodeSessionOutputs.emplace(newSessionMetadatas[i].getSessionKey(), SessionResult{newSessionMetadatas[i], TensorMap{{tensorName, dividedTensor}}});
+                nodeSessionOutputs.emplace(sessionKey, SessionResult{newSessionMetadatas[i], TensorMap{{tensorName, dividedTensor}}});
             } else {
                 it->second.second.emplace(tensorName, dividedTensor);
             }
@@ -267,7 +264,7 @@ Status Node::demultiplyOutputs(SessionResults& nodeSessionOutputs) {
 Status Node::createShardedTensor(ov::Tensor& dividedTensor, Precision precision, const shape_t& shape, const ov::Tensor& tensor, size_t i, size_t step, const NodeSessionMetadata& metadata, const std::string tensorName) {
     OVMS_PROFILE_FUNCTION();
 
-    auto allocatorImpl = std::make_shared<DemultiplexerAllocator>(tensor, i, step, tensorName);
+    auto allocatorImpl = std::make_shared<DemultiplexerAllocator>(tensor, i, step);
     auto allocator = ov::Allocator(allocatorImpl);
     dividedTensor = ov::Tensor(ov::element::Type(ovmsPrecisionToIE2Precision(precision)), ov::Shape(shape), allocator);
 

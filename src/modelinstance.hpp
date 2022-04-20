@@ -321,7 +321,10 @@ public:
     /**
          * @brief Destroy the Model Instance object
          */
-    virtual ~ModelInstance() = default;
+    virtual ~ModelInstance() {
+        SPDLOG_INFO("~ModelInstance {}", getName());
+        this->unloadModelComponents();
+    }
 
     /**
          * @brief Increases predict requests usage count

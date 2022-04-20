@@ -920,6 +920,8 @@ void ModelManager::join() {
             SPDLOG_INFO("Shutdown cleaner thread");
         }
     }
+
+    this->models.clear();
 }
 
 void ModelManager::getVersionsToChange(
