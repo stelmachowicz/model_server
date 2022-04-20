@@ -27,8 +27,12 @@
 #include "node.hpp"
 #include "pipelineeventqueue.hpp"
 #include "profiler.hpp"
+#include "timer.hpp"
 
 namespace ovms {
+
+using DeferredNodes = std::vector<std::pair<std::reference_wrapper<Node>, session_key_t>>;
+
 Pipeline::~Pipeline() = default;
 
 Pipeline::Pipeline(Node& entry, Node& exit, const std::string& name) :
@@ -99,11 +103,12 @@ Status Pipeline::execute() {
             getName(), entry.getName(), status.string());
         return status;
     }
-    std::vector<std::pair<std::reference_wrapper<Node>, session_key_t>> deferredNodeSessions;
+    DeferredNodes deferredNodeSessions;
     const uint WAIT_FOR_FINISHED_NODE_TIMEOUT_MICROSECONDS = 5000;
     const uint WAIT_FOR_DEFERRED_NODE_DISARM_TIMEOUT_MICROSECONDS = 500;
     // process finished session nodes and if no one is finished check if any node session with deferred execution
     // has necessary resources already
+    DeferredNodes tmpDeferredNodeSessions;
     while (true) {
         spdlog::trace("Pipeline: {} waiting for message that node finished.", getName());
         OVMS_PROFILE_SYNC_BEGIN("PipelineEventQueue::tryPull");
@@ -134,7 +139,27 @@ Status Pipeline::execute() {
                     break;
                 }
             }
+            OVMS_PROFILE_SYNC_BEGIN("Check next");
+            for (auto& nextNode : nextNodesFromFinished) {
+                auto readySessions = nextNode.get().getReadySessions();
+                for (auto sessionKey : readySessions) {
+                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Started execution of pipeline: {} node: {} session: {}", getName(), nextNode.get().getName(), sessionKey);
+                    startedSessions.emplace(nextNode.get().getName() + sessionKey);
+                    status = nextNode.get().execute(sessionKey, finishedNodeQueue);
+                    if (status == StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET) {
+                        SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} not ready for execution yet", nextNode.get().getName(), sessionKey);
+                        tmpDeferredNodeSessions.emplace_back(nextNode.get(), sessionKey);
+                        status = StatusCode::OK;
+                    }
+                    CHECK_AND_LOG_ERROR(nextNode.get())
+                    if (!firstErrorStatus.ok()) {
+                        break;
+                    }
+                }
+            }
+            OVMS_PROFILE_SYNC_END("Check next");
             //
+            OVMS_PROFILE_SYNC_BEGIN("Check deferred");
             for (auto it = deferredNodeSessions.begin(); it != deferredNodeSessions.end();) {
                 if (finishedNodeQueue.size() > 0) {
                     break;
@@ -156,24 +181,17 @@ Status Pipeline::execute() {
                     CHECK_AND_LOG_ERROR(node)
                 }
             }
-            //
-            for (auto& nextNode : nextNodesFromFinished) {
-                auto readySessions = nextNode.get().getReadySessions();
-                for (auto sessionKey : readySessions) {
-                    SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Started execution of pipeline: {} node: {} session: {}", getName(), nextNode.get().getName(), sessionKey);
-                    startedSessions.emplace(nextNode.get().getName() + sessionKey);
-                    status = nextNode.get().execute(sessionKey, finishedNodeQueue);
-                    if (status == StatusCode::PIPELINE_STREAM_ID_NOT_READY_YET) {
-                        SPDLOG_LOGGER_DEBUG(dag_executor_logger, "Node: {} session: {} not ready for execution yet", nextNode.get().getName(), sessionKey);
-                        deferredNodeSessions.emplace_back(nextNode.get(), sessionKey);
-                        status = StatusCode::OK;
-                    }
-                    CHECK_AND_LOG_ERROR(nextNode.get())
-                    if (!firstErrorStatus.ok()) {
-                        break;
-                    }
-                }
+            OVMS_PROFILE_SYNC_END("Check deferred");
+            OVMS_PROFILE_SYNC_BEGIN("Copy Tmp Defer to Actual Defer");
+
+            deferredNodeSessions.reserve(deferredNodeSessions.size() + tmpDeferredNodeSessions.size());
+            for (size_t i = 0; i < tmpDeferredNodeSessions.size(); i++) {
+                deferredNodeSessions.emplace_back(std::move(tmpDeferredNodeSessions.at(i)));
             }
+            tmpDeferredNodeSessions.clear();
+
+            OVMS_PROFILE_SYNC_END("Copy Tmp Defer to Actual Defer");
+            //
             if (startedSessions.size() == finishedSessions.size()) {
                 break;
             }
