@@ -76,6 +76,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
 WORKDIR /
 
+COPY drivers/ats/* /drivers/ats/
+
 RUN	set -e ; \
 	set -x ; \
         apt update -y ; \
@@ -110,6 +112,9 @@ RUN	set -e ; \
                         curl -L -O https://github.com/intel/compute-runtime/releases/download/22.10.22597/intel-opencl-icd_22.10.22597_amd64.deb ; \
                         curl -L -O https://github.com/intel/compute-runtime/releases/download/22.10.22597/intel-level-zero-gpu_1.3.22597_amd64.deb ; \
                         dpkg -i intel*.deb && rm -Rf /tmp/gpu_deps ; \
+                ;; \
+                "ats") \
+                        dpkg -i /drivers/ats/*.deb && rm -Rf /drivers ; \
                 ;; \
                         *) \
                         echo "ERROR: Unrecognized driver ${INSTALL_DRIVER_VERSION}." ; \
