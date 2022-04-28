@@ -76,6 +76,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
 WORKDIR /
 
+COPY drivers/ats/* /drivers/ats/
+
 RUN	set -e ; \
 	set -x ; \
         apt update -y ; \
@@ -101,6 +103,9 @@ RUN	set -e ; \
                         curl -L -O https://github.com/intel/compute-runtime/releases/download/20.35.17767/intel-ocloc_20.35.17767_amd64.deb ; \
                         curl -L -O https://github.com/intel/compute-runtime/releases/download/20.35.17767/intel-level-zero-gpu_1.0.17767_amd64.deb ; \
                         dpkg -i intel*.deb && rm -Rf /tmp/gpu_deps ; \
+                ;; \
+                "ats") \
+                        dpkg -i /drivers/ats/*.deb && rm -Rf /drivers ; \
                 ;; \
                         *) \
                         echo "ERROR: Unrecognized driver ${INSTALL_DRIVER_VERSION}." ; \
