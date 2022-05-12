@@ -248,6 +248,10 @@ Status Node::demultiplyOutputs(SessionResults& nodeSessionOutputs) {
             OVMS_PROFILE_SCOPE("Create Shard");
             ov::Tensor dividedTensor;
             this->createShardedTensor(dividedTensor, ovElementTypeToOvmsPrecision(tensor.get_element_type()), newDims, tensor, i, step, metadata, tensorName);
+            std::stringstream ss;
+            ss << "Node: " << getName() << " input demultiplied: " << tensorName
+               << "; Actual: " << TensorInfo::shapeToString(dividedTensor.get_shape());
+            SPDLOG_LOGGER_DEBUG(dag_executor_logger, "{}", ss.str());
             auto sessionKey = newSessionMetadatas[i].getSessionKey();
             auto it = nodeSessionOutputs.find(sessionKey);
             if (it == nodeSessionOutputs.end()) {
@@ -261,7 +265,7 @@ Status Node::demultiplyOutputs(SessionResults& nodeSessionOutputs) {
     return StatusCode::OK;
 }
 
-Status Node::createShardedTensor(ov::Tensor& dividedTensor, Precision precision, const shape_t& shape, const ov::Tensor& tensor, size_t i, size_t step, const NodeSessionMetadata& metadata, const std::string& tensorName) {
+Status Node::createShardedTensor(ov::Tensor& dividedTensor, Precision precision, const shape_t& shape, const ov::Tensor& tensor, size_t i, size_t step, const NodeSessionMetadata& metadata, const std::string tensorName) {
     dividedTensor = createSharedTensor(tensor.get_element_type(), shape, (char*)(tensor.data()) + i * step);
     return StatusCode::OK;
 }
