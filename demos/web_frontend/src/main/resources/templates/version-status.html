@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Model Version</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+</head>
+<body>
+    <div id="container">
+        <h1>
+            Model Version
+        </h1>
+    </div>
+
+    <div class="w3-responsive">
+        <table class="w3-table-all">
+            <tr>
+                <th>version</th>
+                <th>state</th>
+                <th>status (error_code)</th>
+                <th>status (error_message)</th>
+            </tr>
+            <tr th:each="obj: ${versionStatus.model_version_status}">
+                <td th:text="${obj.version}"></td>
+                <td th:text="${obj.state}"></td>
+                <td th:text="${obj.status.error_code}"></td>
+                <td th:text="${obj.status.error_message}"></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>
